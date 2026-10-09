@@ -76,4 +76,21 @@ export function validateBankAccount(acc: string, bank: string): string | null {
   return null
 }
 
+/** Age from a valid SA ID number's YYMMDD birth date. */
+export function ageFromSaId(id: string, today = new Date()): number {
+  const d = id.replace(/\s/g, '')
+  const yy = Number(d.slice(0, 2))
+  const century = yy <= today.getFullYear() % 100 ? 2000 : 1900
+  const birth = new Date(century + yy, Number(d.slice(2, 4)) - 1, Number(d.slice(4, 6)))
+  let age = today.getFullYear() - birth.getFullYear()
+  if (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate())) age--
+  return age
+}
+
+/** The quote age range an age falls in, or null if outside the entry ages. */
+export function ageBandFor(age: number): string | null {
+  if (age < 18 || age > 65) return null
+  return age < 30 ? '18-29' : age < 40 ? '30-39' : age < 50 ? '40-49' : age < 60 ? '50-59' : '60-65'
+}
+
 export const isPostalCode = (p: string) => /^\d{4}$/.test(p.trim())

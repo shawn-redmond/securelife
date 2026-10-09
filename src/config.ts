@@ -36,6 +36,21 @@ export const config = {
     /** Shown as social proof only once it is a real, current figure. */
     customersLabel: '10,000+ families',
   },
+  /**
+   * PLACEHOLDER waiting periods, per benefit. Shown wherever the claim promise appears,
+   * so "paid within 48 hours" is never read without them. Confirm with the underwriter.
+   */
+  waiting: {
+    life: { immediate: 'Accidental death', months: 6, later: 'natural causes' },
+    medical: { immediate: 'Accidents', months: 3, later: 'other emergencies' },
+    household: { immediate: null, months: 1, later: 'all claims' },
+    critical: { immediate: null, months: 3, later: 'all claims' },
+    motor: { immediate: null, months: 1, later: 'all claims' },
+    /** Family funeral lives: natural causes, by age range. Accidental death is covered from day one. */
+    family: { u65: 6, '65-74': 12, '75-84': 12 },
+  },
+  /** Ages a policyholder can join at (the age ranges offered). */
+  entryAge: { min: 18, max: 65 },
   upload: {
     maxBytes: 5 * 1024 * 1024,
     accept: ['application/pdf', 'image/jpeg', 'image/png'],

@@ -2,6 +2,8 @@
 
 A clickable, production-quality front end for the 10-step SecureLife Bundle onboarding journey (spec v11). There's no backend: pricing, OTP, payments, Home Affairs verification and document delivery are simulated in the browser so the whole journey can be demoed end to end.
 
+**Requirements:** `docs/requirements-v12.md` is the current handoff spec. It supersedes the v11 PDF and lists every change.
+
 ## Run it
 
 ```bash
@@ -59,6 +61,12 @@ The copy is written so customers see what they get before what they pay, without
 
 The claim payout time, cooling-off period and customer count are placeholders in `config.promises` (`src/config.ts`). They must be true before go-live (FSCA Treating Customers Fairly and advertising rules).
 
+## Trust safeguards
+
+- **Waiting periods** (`config.waiting`, placeholders) appear next to every claim promise: on the plan cards, each quote line, a visible "When your cover starts paying" section at payment (acknowledged in the confirmation checkbox), and as dated lines on the issued policy.
+- **Age check:** the age in the ID number is compared with the priced age range. If it differs, the customer sees the old and new price and must accept before continuing; outside joining ages (18–65), they're handed to a person. Nothing is debited before this point.
+- **Beneficiary before payment:** the "Who you're protecting" step asks who should receive the funeral payout, with quick-pick chips for family members. Customers can defer it with an honest warning, and the issued screen reminds them.
+
 ## Demo controls
 
 The **Demo** pill in the header lets a presenter trigger every edge state in the spec:
@@ -78,7 +86,7 @@ Handy demo values:
 | OTP | shown in the simulated SMS toast |
 | Card that succeeds | `4242 4242 4242 4242` |
 | Card that is declined | `4000 0000 0000 0002` |
-| Valid SA ID number | `9001015009086` |
+| SA ID numbers | `9001015009086` (age 36, matches), `8203155009089` (age 44, price update), `5806205009082` (age 68, handoff) |
 | Natural pricing fallbacks | motor older than 20 years; "yes" to the critical-illness history question |
 
 ## Placeholders to replace before go-live

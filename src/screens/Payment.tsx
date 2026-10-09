@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Check, ChevronDown, CreditCard, HeartHandshake, Landmark, Lock, MessageCircle, ShieldCheck } from 'lucide-react'
-import { livesCount } from '../lib/value'
+import { CalendarClock, Check, ChevronDown, CreditCard, HeartHandshake, Landmark, Lock, MessageCircle, ShieldCheck } from 'lucide-react'
+import { familyWaitingText, livesCount, waitingShort } from '../lib/value'
+import { familyCount } from '../data/family'
 import { Screen } from '../components/shell'
 import { ProductIcon } from '../components/bundle'
 import { Alert, Button, Checkbox, InlineError, SelectField, TextField } from '../components/ui'
@@ -269,10 +270,7 @@ export function Payment() {
                     <p className="font-semibold text-ink-900">
                       {productById[id].name} · {result.ok && randShort(result.sumAssured)} · {result.ok && rand(result.monthly)}/month
                     </p>
-                    <p className="text-ink-600">
-                      Fixed benefit paid on a covered event. {id === 'life' ? '6-month waiting period for natural causes; accidents covered from day one.' : '3-month waiting period applies, except accidents.'}{' '}
-                      No cash-back or savings component.
-                    </p>
+                    <p className="text-ink-600">Fixed benefit paid on a covered event. {waitingShort(id)}. No cash-back or savings component.</p>
                   </div>
                 </div>
               ))}
@@ -281,17 +279,35 @@ export function Payment() {
         )}
       </div>
 
+      <section aria-labelledby="when-cover-pays" className="mt-4 rounded-2xl bg-white p-4 ring-1 ring-ink-200">
+        <h2 id="when-cover-pays" className="flex items-center gap-2 text-sm font-semibold text-ink-900">
+          <CalendarClock className="h-4 w-4 text-brand-600" aria-hidden /> When your cover starts paying
+        </h2>
+        <ul className="mt-3 space-y-2.5">
+          {q.priced.map((id) => (
+            <li key={id} className="flex gap-3 text-sm">
+              <ProductIcon id={id} size="sm" />
+              <span className="min-w-0">
+                <span className="block font-semibold text-ink-900">{productById[id].name}</span>
+                <span className="block text-ink-600">{waitingShort(id)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        {withFamily && familyCount(state.app.family) > 0 && <p className="mt-3 text-xs text-ink-500">{familyWaitingText()}</p>}
+      </section>
+
       <div className="mt-4 flex gap-3 rounded-2xl bg-brand-50 p-4 text-sm text-brand-900 ring-1 ring-inset ring-brand-200">
         <MessageCircle className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" aria-hidden />
         <p>
           <span className="font-semibold">If something happens, one WhatsApp is all it takes.</span> We pay valid claims within{' '}
-          {config.promises.claimPayoutHours} hours. Join {config.promises.customersLabel} already covered.
+          {config.promises.claimPayoutHours} hours, once the waiting period for that benefit has passed. Join {config.promises.customersLabel} already covered.
         </p>
       </div>
 
       <div className="mt-5">
         <Checkbox checked={confirm} onChange={setConfirm}>
-          I’ve read and understood the policy summary for every benefit on my policy.
+          I’ve read and understood the policy summary and waiting periods for every benefit on my policy.
         </Checkbox>
       </div>
     </Screen>

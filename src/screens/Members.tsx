@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react'
 import { CircleCheck, Plus, Trash2 } from 'lucide-react'
 import { Screen } from '../components/shell'
 import { Button, Checkbox, InlineError, SelectField, TextField } from '../components/ui'
-import { bandLabel, childAmount, type FamilyBand, type MemberDetail } from '../data/family'
+import { bandLabel, childAmount, emptyFamily, familyCount, type FamilyBand, type MemberDetail } from '../data/family'
+import { Alert, LinkButton } from '../components/ui'
+import { config } from '../config'
+import { normalisePhone } from '../lib/validation'
 import { rand } from '../lib/format'
 import { useStore } from '../state/store'
 
@@ -37,7 +40,8 @@ const bandFor = (age: number): FamilyBand | null => (age < 65 ? 'u65' : age <= 7
 
 export function Members() {
   const { state, set } = useStore()
-  const family = state.app.family!
+  const family = state.app.family ?? emptyFamily()
+  const hasFamily = familyCount(state.app.family) > 0
   const saved = Object.fromEntries(state.app.members.map((m) => [m.key, m]))
 
   const initial = useMemo<Slot[]>(() => {
@@ -78,7 +82,21 @@ export function Members() {
     return e
   }
   const allErrors = slots.map(errorsFor)
-  const valid = allErrors.every((e) => Object.keys(e).length === 0) && consent
+  // Beneficiary: who receives the payout if the policyholder dies.
+  const existing = state.beneficiaries[0]
+  const [ben, setBen] = useState({ name: existing?.name ?? '', relationship: existing?.relationship ?? '', phone: existing?.phone ?? '' })
+  const [benLater, setBenLater] = useState(false)
+  const benErrors = benLater
+    ? {}
+    : {
+        name: ben.name.trim().split(/\s+/).length >= 2 ? null : 'Enter their first name and surname',
+        relationship: ben.relationship ? null : 'Choose how they’re related to you',
+        phone: normalisePhone(ben.phone) ? null : 'Enter a valid South African cell number',
+      }
+  const benValid = Object.values(benErrors).every((e) => !e)
+  const pickable = slots.filter((x, i) => x.kind !== 'child' && Object.keys(allErrors[i]).length === 0)
+
+  const valid = allErrors.every((e) => Object.keys(e).length === 0) && (consent || !hasFamily) && benValid
 
   const patch = (key: string, p: Partial<Slot>) => setSlots((xs) => xs.map((x) => (x.key === key ? { ...x, ...p } : x)))
 
@@ -105,7 +123,11 @@ export function Members() {
   const submit = () => {
     setSubmitted(true)
     if (!valid) return
-    set((s) => ({ step: 'payment', app: { ...s.app, members: slots.map(({ key, relation, name, dob }) => ({ key, relation, name: name.trim(), dob })) } }))
+    set((s) => ({
+      step: 'payment',
+      app: { ...s.app, members: slots.map(({ key, relation, name, dob }) => ({ key, relation, name: name.trim(), dob })) },
+      beneficiaries: benLater ? s.beneficiaries : [{ name: ben.name.trim(), relationship: ben.relationship, phone: normalisePhone(ben.phone)!, share: 100 }],
+    }))
   }
 
   const title = (s: Slot) =>
@@ -113,11 +135,15 @@ export function Members() {
 
   return (
     <Screen
-      title="Who you’re protecting"
-      subtitle={`Tell us about the family members on your funeral cover. Each adult gets ${rand(family.amount)}.`}
+      title={hasFamily ? 'Who you’re protecting' : 'Who should we pay?'}
+      subtitle={
+        hasFamily
+          ? `Tell us about the family members on your funeral cover, and who should receive your payout. Each adult gets ${rand(family.amount)}.`
+          : `If you pass away, we pay this person within ${config.promises.claimPayoutHours} hours so they can arrange your funeral.`
+      }
       footer={
         <div className="space-y-3">
-          {submitted && !valid && <InlineError>{consent ? 'Check the highlighted details' : 'Please confirm you can share their details'}</InlineError>}
+          {submitted && !valid && <InlineError>{consent || !hasFamily ? 'Check the highlighted details' : 'Please confirm you can share their details'}</InlineError>}
           <Button block softDisabled={!valid} onClick={submit}>
             Continue to payment
           </Button>
@@ -185,11 +211,77 @@ export function Members() {
             <Plus className="h-4 w-4" aria-hidden /> Add another child
           </button>
         )}
-        <div className="rounded-xl bg-ink-50 p-4">
-          <Checkbox checked={consent} onChange={setConsent}>
-            I confirm these family members know they’re being covered and that I may share their details for this policy.
-          </Checkbox>
-        </div>
+        <section aria-labelledby="beneficiary" className="rounded-2xl bg-white p-4 ring-1 ring-ink-200 sm:p-5">
+          {hasFamily && (
+            <>
+              <h2 id="beneficiary" className="font-semibold text-ink-950">
+                If you pass away, who should we pay?
+              </h2>
+              <p className="mt-0.5 text-sm text-ink-600">We pay them within {config.promises.claimPayoutHours} hours so they can arrange your funeral.</p>
+            </>
+          )}
+          {!hasFamily && <h2 id="beneficiary" className="sr-only">Your beneficiary</h2>}
+          {benLater ? (
+            <Alert
+              tone="warning"
+              className={hasFamily ? 'mt-4' : ''}
+              title="You can add someone later"
+              action={
+                <Button size="sm" variant="secondary" onClick={() => setBenLater(false)}>
+                  Add someone now
+                </Button>
+              }
+            >
+              Without a beneficiary, your payout may have to go through your estate. That can take months, which is why we recommend choosing someone now.
+            </Alert>
+          ) : (
+            <div className={hasFamily ? 'mt-4 space-y-4' : 'space-y-4'}>
+              {pickable.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {pickable.map((m) => (
+                    <button
+                      key={m.key}
+                      onClick={() =>
+                        setBen((b) => ({ ...b, name: m.name.trim(), relationship: m.kind === 'partner' ? 'Spouse or partner' : m.kind === 'parent' ? 'Parent' : 'Other family' }))
+                      }
+                      className="rounded-full bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-800 ring-1 ring-brand-200 hover:bg-brand-100"
+                    >
+                      {m.name.trim().split(/\s+/)[0]} ({m.relation})
+                    </button>
+                  ))}
+                </div>
+              )}
+              <TextField label="Their full name" value={ben.name} error={submitted ? benErrors.name : null} onChange={(e) => setBen({ ...ben, name: e.target.value })} />
+              <SelectField
+                label="Relationship to you"
+                value={ben.relationship}
+                error={submitted ? benErrors.relationship : null}
+                options={['Spouse or partner', 'Child', 'Parent', 'Sibling', 'Other family', 'Other'].map((v) => ({ value: v, label: v }))}
+                onChange={(e) => setBen({ ...ben, relationship: e.target.value })}
+              />
+              <TextField
+                label="Their cell number"
+                type="tel"
+                inputMode="tel"
+                value={ben.phone}
+                error={submitted ? benErrors.phone : null}
+                hint="So we can reach them quickly if they need to claim."
+                onChange={(e) => setBen({ ...ben, phone: e.target.value })}
+              />
+              <LinkButton className="text-sm" onClick={() => setBenLater(true)}>
+                I’ll add someone later
+              </LinkButton>
+            </div>
+          )}
+        </section>
+
+        {hasFamily && (
+          <div className="rounded-xl bg-ink-50 p-4">
+            <Checkbox checked={consent} onChange={setConsent}>
+              I confirm these family members know they’re being covered and that I may share their details for this policy.
+            </Checkbox>
+          </div>
+        )}
       </div>
     </Screen>
   )

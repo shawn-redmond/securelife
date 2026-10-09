@@ -173,8 +173,11 @@ export function branchComplete(product: ProductId, answers: AllAnswers) {
 
 export const heldProducts = (s: State) => s.policy?.benefits.map((b) => b.product) ?? []
 
-/** Family funeral lives need names and dates of birth before payment. */
-export const needsMembers = (s: State) => s.app.selected.includes('life') && familyCount(s.app.family) > 0
+/**
+ * The "who you're protecting" step runs before payment whenever the funeral benefit is on the
+ * application: family lives need names, and a beneficiary is asked for so a claim isn't held up by an estate.
+ */
+export const needsMembers = (s: State) => s.app.selected.includes('life') && (familyCount(s.app.family) > 0 || !s.policy)
 
 export function prevStep(s: State): Partial<State> | null {
   switch (s.step) {

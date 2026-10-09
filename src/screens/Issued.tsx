@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Check, CircleCheck, Copy, Download, FileText, HeartHandshake, LoaderCircle, Mail, MessageCircle, Phone, Plus, UserPlus } from 'lucide-react'
 import { Screen, Sheet } from '../components/shell'
 import { ProductIcon } from '../components/bundle'
-import { Badge, Button, Card, SelectField, TextField } from '../components/ui'
+import { Alert, Badge, Button, Card, SelectField, TextField } from '../components/ui'
 import { notify } from '../components/Toast'
 import { productById } from '../data/products'
 import { config } from '../config'
@@ -10,6 +10,7 @@ import { longDate, maskPhone, rand, randShort } from '../lib/format'
 import { normalisePhone } from '../lib/validation'
 import { newApplication, useStore, type Policy, type State } from '../state/store'
 import { childAmount, familyCount } from '../data/family'
+import { waitingDated } from '../lib/value'
 
 export function Issued() {
   const { state, set } = useStore()
@@ -117,6 +118,7 @@ export function Issued() {
                     {randShort(b.sumAssured)} benefit
                     {b.product === 'life' && familyCount(policy.family) > 0 && ` · plus ${familyCount(policy.family)} family`}
                   </p>
+                  <p className="mt-0.5 text-xs text-ink-500">{waitingDated(b.product, new Date(b.addedOn))}</p>
                 </div>
                 <p className="font-semibold tabular-nums text-ink-900">{rand(monthly)}</p>
               </li>
@@ -147,6 +149,21 @@ export function Issued() {
             ))}
           </ul>
         </section>
+      )}
+
+      {!state.beneficiaries.length && policy.benefits.some((b) => b.product === 'life') && (
+        <Alert
+          tone="warning"
+          className="mt-6"
+          title="Add a beneficiary so we can pay quickly"
+          action={
+            <Button size="sm" onClick={() => setBenOpen(true)} icon={<UserPlus className="h-4 w-4" aria-hidden />}>
+              Add a beneficiary
+            </Button>
+          }
+        >
+          Without one, your funeral payout may have to go through your estate, which can take months.
+        </Alert>
       )}
 
       <section className="mt-6 rounded-2xl bg-white p-5 ring-1 ring-ink-100">

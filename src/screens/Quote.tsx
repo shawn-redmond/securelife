@@ -9,7 +9,7 @@ import { PRODUCTS, productById, sortProducts, type ProductId } from '../data/pro
 import { capFor, capUsed, quoteBundle, sumAssuredOf } from '../lib/pricing'
 import { config } from '../config'
 import { cx, rand, randShort } from '../lib/format'
-import { perDay, totalProtection, whoProtected } from '../lib/value'
+import { perDay, totalProtection, waitingShort, whoProtected } from '../lib/value'
 
 const randLong = (n: number) => `R${n.toLocaleString('en-ZA')}`
 import { branchComplete, heldProducts, questionList, useStore } from '../state/store'
@@ -70,7 +70,7 @@ export function Quote() {
               <div>
                 <p className="font-display text-xl font-extrabold leading-tight">Up to {randLong(protection)} in payouts</p>
                 <p className="mt-0.5 text-sm text-brand-100">
-                  Protecting {protectedWho}. Paid within {config.promises.claimPayoutHours} hours of a valid claim.
+                  Protecting {protectedWho}. Paid within {config.promises.claimPayoutHours} hours of a valid claim, once any waiting period has passed.
                 </p>
               </div>
             </div>
@@ -105,6 +105,7 @@ export function Quote() {
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-ink-950">{p.name}</p>
                   <p className="text-sm text-ink-500">{result.ok ? `${randShort(result.sumAssured)} fixed benefit` : 'Needs a quick chat'}</p>
+                  {result.ok && <p className="mt-0.5 text-xs text-ink-500">{waitingShort(id)}</p>}
                 </div>
                 {result.ok ? (
                   <p className="text-right font-display text-lg font-bold tabular-nums text-ink-950">

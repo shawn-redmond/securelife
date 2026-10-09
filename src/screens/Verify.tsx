@@ -6,11 +6,12 @@ import { notify } from '../components/Toast'
 import { config } from '../config'
 import { maskPhone } from '../lib/format'
 import { quoteBundle } from '../lib/pricing'
-import { validateSaId } from '../lib/validation'
+import { ageBandFor, ageFromSaId, validateSaId } from '../lib/validation'
+import { rand } from '../lib/format'
 import { ref, useStore, type Policy, type PolicyBenefit, type State } from '../state/store'
 import { familyCount, familyPremium } from '../data/family'
 
-type Phase = 'intro' | 'camera' | 'checking' | 'success' | 'fallback' | 'mismatch' | 'paused' | 'review'
+type Phase = 'intro' | 'reprice' | 'ineligible' | 'camera' | 'checking' | 'success' | 'fallback' | 'mismatch' | 'paused' | 'review'
 
 /**
  * Activate the policy once identity has passed. One check, one policy number, one document;
@@ -57,6 +58,16 @@ export function Verify() {
   const [retryMsg, setRetryMsg] = useState<string | null>(null)
   const [noFaceUsed, setNoFaceUsed] = useState(false)
   const idErr = validateSaId(idNumber)
+  const idAge = idErr ? null : ageFromSaId(idNumber)
+  const idBand = idAge === null ? null : ageBandFor(idAge)
+  const app = state.app
+  const ageProducts = app.selected.filter((id) => app.answers[id]?.ageBand)
+  const pricedBands = [...new Set(ageProducts.map((id) => app.answers[id]!.ageBand))]
+  const repriced = () => {
+    const answers = { ...app.answers }
+    for (const id of ageProducts) answers[id] = { ...answers[id]!, ageBand: idBand! }
+    return answers
+  }
 
   // Already verified customers are never asked again (spec §4.8, §5).
   useEffect(() => {
@@ -107,6 +118,70 @@ export function Verify() {
     notify(`SMS to ${maskPhone(state.customer.phone)}`, 'Your cover is waiting! Finish your quick ID check here: securelife.example/r/••••')
     setPhase('paused')
   }
+
+  if (phase === 'reprice' && idBand) {
+    const before = quoteBundle(app.selected, app.answers, state.demo.pricingUnavailable, app.family).total
+    const after = quoteBundle(app.selected, repriced(), state.demo.pricingUnavailable, app.family).total
+    return (
+      <Screen
+        title="Let’s update your price"
+        subtitle={`Your ID shows you’re ${idAge}, so your age range is ${idBand.replace('-', '–')}, not ${pricedBands[0].replace('-', '–')}. Your price is based on age, so it needs to change.`}
+        footer={
+          <div className="space-y-3">
+            <Button
+              block
+              onClick={() => {
+                set((s) => ({ app: { ...s.app, answers: repriced(), profile: { ...s.app.profile, ageBand: idBand } } }))
+                setPhase('camera')
+              }}
+            >
+              Continue at {rand(after)} a month
+            </Button>
+            <a
+              href={config.support.whatsappLink}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-12 items-center justify-center gap-2 text-[15px] font-semibold text-brand-700"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden /> Talk to us first
+            </a>
+          </div>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-white p-4 ring-1 ring-ink-200">
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">Was</p>
+            <p className="mt-1 font-display text-2xl font-extrabold tabular-nums text-ink-400 line-through">{rand(before)}</p>
+          </div>
+          <div className="rounded-2xl bg-brand-50 p-4 ring-2 ring-brand-600">
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-800">Now</p>
+            <p className="mt-1 font-display text-2xl font-extrabold tabular-nums text-ink-950">{rand(after)}</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm text-ink-600">Your benefits stay the same. Nothing has been debited yet, and you can still cancel.</p>
+      </Screen>
+    )
+  }
+
+  if (phase === 'ineligible')
+    return (
+      <Screen
+        title="We need to talk this through with you"
+        subtitle={`Our online cover is for people aged ${config.entryAge.min} to ${config.entryAge.max}, and your ID shows you’re ${idAge}. Nothing has been debited. One of our team can look at other options with you.`}
+      >
+        <a
+          href={config.support.whatsappLink}
+          target="_blank"
+          rel="noreferrer"
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 font-semibold text-white"
+        >
+          <MessageCircle className="h-5 w-5" aria-hidden /> Chat to us on WhatsApp
+        </a>
+        <Button block variant="ghost" className="mt-2" onClick={() => setPhase('intro')}>
+          Check my ID number
+        </Button>
+      </Screen>
+    )
 
   if (phase === 'paused')
     return (
@@ -238,7 +313,9 @@ export function Verify() {
               setTouched(true)
               if (!idErr && consent) {
                 set((s) => ({ customer: { ...s.customer, idNumber: idNumber.replace(/\s/g, '') } }))
-                setPhase('camera')
+                // The price was set from the age range given at the start; the ID number is the source of truth.
+                if (!idBand) return setPhase('ineligible')
+                setPhase(pricedBands.some((b) => b !== idBand) ? 'reprice' : 'camera')
               }
             }}
           >
@@ -264,7 +341,7 @@ export function Verify() {
           onBlur={() => idNumber && setTouched(true)}
           error={touched ? idErr : null}
           prefix={<IdCard className="h-5 w-5" aria-hidden />}
-          hint="Demo: try 9001015009086"
+          hint="Demo: 9001015009086. More test IDs in the Demo panel."
         />
         <div className="rounded-xl bg-ink-50 p-4">
           <Checkbox checked={consent} onChange={setConsent}>

@@ -93,6 +93,20 @@ export function DemoPanel() {
           </div>
         </Group>
 
+        <Group title="Step 8 · ID numbers">
+          <ul className="space-y-1 text-xs text-ink-600">
+            <li>
+              <code className="font-semibold text-ink-900">9001015009086</code> age 36, matches a 30–39 quote
+            </li>
+            <li>
+              <code className="font-semibold text-ink-900">8203155009089</code> age 44, triggers a price update
+            </li>
+            <li>
+              <code className="font-semibold text-ink-900">5806205009082</code> age 68, outside joining ages
+            </li>
+          </ul>
+        </Group>
+
         <Group title="Step 9 · Documents">
           <Chip on={d.docFailure} onClick={() => patchDemo({ docFailure: !d.docFailure })}>
             Policy document fails first time

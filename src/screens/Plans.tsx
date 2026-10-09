@@ -9,6 +9,12 @@ import { FamilyPanel } from '../components/FamilyEditor'
 import { familyCount, familyPremium } from '../data/family'
 import { cx, rand } from '../lib/format'
 import { forWhom, perDay } from '../lib/value'
+import { config } from '../config'
+import type { ProductId } from '../data/products'
+import type { FamilyCover } from '../data/family'
+
+const maxWaiting = (ids: ProductId[], family: FamilyCover | null) =>
+  Math.max(...ids.map((id) => config.waiting[id].months), ...(family ? [...family.parents, ...family.extended].map((b) => config.waiting.family[b]) : []))
 import { useStore } from '../state/store'
 
 export function Plans() {
@@ -172,7 +178,10 @@ export function Plans() {
                 ))}
               </ul>
 
-              <Button className="mt-6" block variant={rec ? 'primary' : 'secondary'} size="md" onClick={() => choose(plan)}>
+              <p className="mt-5 rounded-lg bg-ink-50 px-3 py-2 text-xs leading-relaxed text-ink-600">
+                Accidents are covered from day one. Other claims have a waiting period of up to {maxWaiting(plan.products, family)} months.
+              </p>
+              <Button className="mt-4" block variant={rec ? 'primary' : 'secondary'} size="md" onClick={() => choose(plan)}>
                 Choose {plan.name}
               </Button>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ink-500">

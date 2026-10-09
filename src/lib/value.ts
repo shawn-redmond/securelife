@@ -1,4 +1,6 @@
 import { familyCount, type FamilyCover } from '../data/family'
+import { config } from '../config'
+import { longDate } from './format'
 import type { ProductId } from '../data/products'
 import type { Dependant } from '../data/plans'
 import { sumAssuredOf, type AllAnswers } from './pricing'
@@ -40,4 +42,32 @@ export function forWhom(deps: Dependant[] | undefined) {
   const names = { partner: 'your partner', children: 'your children', parents: 'your family' }
   const xs = (deps ?? []).filter((d): d is keyof typeof names => d !== 'me').map((d) => names[d])
   return xs.length ? `you and ${join(xs)}` : 'you'
+}
+
+const plural = (n: number) => (n === 1 ? '1 month' : `${n} months`)
+
+/** "Accidents from day one · other emergencies after 3 months" */
+export function waitingShort(id: ProductId) {
+  const w = config.waiting[id]
+  if (!w.months) return 'Covered from day one'
+  return w.immediate ? `${w.immediate} from day one · ${w.later} after ${plural(w.months)}` : `Claims from ${plural(w.months)} after you start`
+}
+
+const addMonths = (d: Date, m: number) => {
+  const x = new Date(d)
+  x.setMonth(x.getMonth() + m)
+  return x
+}
+
+/** Dated version for a policy that has started. */
+export function waitingDated(id: ProductId, start: Date) {
+  const w = config.waiting[id]
+  if (!w.months) return 'Fully covered now'
+  const when = longDate(addMonths(start, w.months))
+  return w.immediate ? `${w.immediate} covered now · ${w.later} from ${when}` : `Claims from ${when}`
+}
+
+export const familyWaitingText = () => {
+  const f = config.waiting.family
+  return `Family members: accidental death covered from day one; natural causes after ${plural(f.u65)} (${plural(f['65-74'])} for anyone 65 or older).`
 }

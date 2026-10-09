@@ -6,7 +6,7 @@ import { Button, InlineError, SelectField, TextField } from '../components/ui'
 import { productById, type Field } from '../data/products'
 import { capFor, capUsed, type Answers } from '../lib/pricing'
 import { cx, rand } from '../lib/format'
-import { isPostalCode } from '../lib/validation'
+import { ageBandFor, ageFromSaId, isPostalCode } from '../lib/validation'
 import { questionList, useStore } from '../state/store'
 
 export function Questions() {
@@ -36,7 +36,11 @@ function QuestionCard({ idx }: { idx: number }) {
     const d: Answers = {}
     for (const f of item.step.fields) {
       if (saved[f.id]) d[f.id] = saved[f.id]
-      else if (f.shared) {
+      else if (f.id === 'ageBand' && state.customer.identityVerified && state.customer.idNumber) {
+        // Verified customers adding a benefit: age comes from their ID, not memory.
+        const band = ageBandFor(ageFromSaId(state.customer.idNumber))
+        if (band) d[f.id] = band
+      } else if (f.shared) {
         // Pre-fill from another branch to save effort; this branch still stores its own answer.
         const other = Object.values(app.answers).find((a) => a?.[f.id])
         if (other) d[f.id] = other[f.id]

@@ -17,6 +17,7 @@ import {
 } from '../data/family'
 import type { Dependant } from '../data/plans'
 import { cx, rand } from '../lib/format'
+import { familyWaitingText } from '../lib/value'
 
 const R = (n: number) => `R${n.toLocaleString('en-ZA')}`
 
@@ -146,6 +147,7 @@ function Editor({ initial, onSave, reliesOnYou }: { initial: FamilyCover | null;
         ))}
       </div>
 
+      <p className="text-xs leading-relaxed text-ink-500">{familyWaitingText()}</p>
       {f.children && (
         <p className="text-xs leading-relaxed text-ink-500">
           Children’s payouts are set by age: {CHILD_LIMITS.map((c) => `${c.label.toLowerCase()} up to ${R(Math.min(c.cap, f.amount))}`).join(', ')}.
