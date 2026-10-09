@@ -1,0 +1,67 @@
+# SecureLife Bundle — onboarding journey (front-end prototype)
+
+A clickable, production-quality front end for the 10-step SecureLife Bundle onboarding journey (spec v11). There's no backend: pricing, OTP, payments, Home Affairs verification and document delivery are simulated in the browser so the whole journey can be demoed end to end.
+
+## Run it
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # static build in dist/ (deploy anywhere, e.g. Netlify/Vercel/S3)
+```
+
+## The journey
+
+| # | Screen | Where |
+|---|--------|-------|
+| 1 | Engage — "Cover, sorted in under 2 minutes." | `src/screens/Engage.tsx` |
+| 2 | Bundle recommender (chat opener, situation checklist, skip link) | `src/screens/Recommend.tsx` |
+| 3 | Bundle picker (pre-selected, named starter bundle, motor last) | `src/screens/Pick.tsx` |
+| 4 | Per-product questions (one branch per product, cross-branch progress) | `src/screens/Questions.tsx` |
+| 5 | Bundle quote (per-line + total, upsell, per-product pricing fallback) | `src/screens/Quote.tsx` |
+| 6 | Contact capture + OTP (POPIA consent, resend countdown, save & resume) | `src/screens/Contact.tsx` |
+| 7 | Payment & bind (DebiCheck debit order or card, static FSP disclosure) | `src/screens/Payment.tsx` |
+| 8 | Identity verification (SA ID validation, selfie with face guide, fallbacks) | `src/screens/Verify.tsx` |
+| 9 | Policy issued (per-product docs, download, beneficiaries, claims info) | `src/screens/Issued.tsx` |
+| 10 | Progressive KYC escalation (event-triggered, uploads) | `src/screens/Kyc.tsx` |
+
+## How the spec's rules are covered
+
+- **Target-market ordering**: medical, household, life, critical illness, motor everywhere; car is never the lead option. Life is framed as fast-payout funeral cover.
+- **Deterministic recommender**: a fixed mapping table plus named bundles in `src/data/recommender.ts`.
+- **Microinsurance constraints**: every benefit is a fixed defined-benefit tier, never a replacement value. The life-class aggregate cap (R141,700) is shared across products. Amounts that would exceed it are disabled with an explanation, and the quote shows a cap meter. Caps, FSP numbers and the underwriter live in one config file: `src/config.ts`.
+- **No PII before the quote**: steps 1–5 ask for no name, ID or contact details.
+- **Verify once**: one ID check covers the whole bundle. "Add more cover" after issue reuses the verified identity, contact and payment method, so the customer goes straight from quote to activation.
+- **Resilience**: journey state is kept in `localStorage`, so a refresh or return visit offers "Pick up where I left off". Browser and Android back buttons work. Card details are never stored.
+- **No dead ends**: verification fails twice → document upload or WhatsApp human handoff. A pricing failure flags just that product. A document failure retries just that product. An upload failure → retry or WhatsApp.
+- **Accessibility and UX**: mobile-first with a sticky thumb-zone CTA, 56px touch targets, labelled fields, inline errors with `role="alert"`, visible focus rings, reduced-motion support, and "soft-disabled" CTAs that explain why you can't continue yet.
+
+## Demo controls
+
+The **Demo** pill in the header lets a presenter trigger every edge state in the spec:
+
+- pricing unavailable per product
+- expired OTP
+- verification outcomes (poor lighting, liveness failure ×2, ID mismatch)
+- a document-delivery failure
+- the four progressive-KYC triggers
+- a failed upload
+- a full reset
+
+Handy demo values:
+
+| What | Value |
+|------|-------|
+| OTP | shown in the simulated SMS toast |
+| Card that succeeds | `4242 4242 4242 4242` |
+| Card that is declined | `4000 0000 0000 0002` |
+| Valid SA ID number | `9001015009086` |
+| Natural pricing fallbacks | motor older than 20 years; "yes" to the critical-illness history question |
+
+## Placeholders to replace before go-live
+
+- FSP numbers, underwriter name and support contacts (`src/config.ts`)
+- Benefit tiers and rates (`src/data/products.ts`, `src/lib/pricing.ts`) — the mock pricing engine stands in for the API layer
+- Critical illness and medical emergency are configured as life-class (`capClass`). This is still an open underwriter question in spec §7.
+
+Stack: React 19, TypeScript, Vite, Tailwind CSS 3 and lucide icons.
