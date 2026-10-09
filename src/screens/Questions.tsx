@@ -12,12 +12,12 @@ import { questionList, useStore } from '../state/store'
 export function Questions() {
   const { state, set } = useStore()
   const { app } = state
-  const list = useMemo(() => questionList(app.selected), [app.selected])
+  const list = useMemo(() => questionList(app.selected, app.onlySteps), [app.selected, app.onlySteps])
   const idx = Math.min(app.qIndex, Math.max(0, list.length - 1))
   const item = list[idx]
 
   useEffect(() => {
-    if (!list.length) set(() => ({ step: 'pick' }))
+    if (!list.length) set((s) => ({ step: s.app.onlySteps ? 'quote' : 'pick' }))
   }, [list.length, set])
 
   if (!item) return null
@@ -27,7 +27,7 @@ export function Questions() {
 function QuestionCard({ idx }: { idx: number }) {
   const { state, set } = useStore()
   const { app } = state
-  const list = questionList(app.selected)
+  const list = questionList(app.selected, app.onlySteps)
   const item = list[idx]
   const product = productById[item.product]
   const saved = app.answers[item.product] ?? {}
@@ -105,6 +105,11 @@ function QuestionCard({ idx }: { idx: number }) {
     <Screen
       eyebrow={
         <div>
+          {app.plan && app.onlySteps && (
+            <p className="mb-4 text-sm font-semibold text-brand-700">
+              Almost done · {list.length === 1 ? 'one detail' : `${list.length} details`} for your {app.plan.name} plan
+            </p>
+          )}
           <div className="flex gap-1.5" aria-hidden>
             {segments.map((s) => (
               <div key={s.pid} className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-100">

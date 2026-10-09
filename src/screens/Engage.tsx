@@ -13,7 +13,7 @@ export function Engage() {
       <main className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 pb-16 pt-10 sm:pt-16 lg:grid-cols-[1.1fr_.9fr] lg:gap-16 lg:pt-24">
         <section className="min-w-0 animate-fade-up">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800 shadow-card ring-1 ring-brand-100">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden /> 5 covers · 1 simple bundle
+            <Sparkles className="h-3.5 w-3.5" aria-hidden /> Ready-made plans · one monthly price
           </span>
           <h1 className="mt-5 font-display text-[44px] font-extrabold leading-[1.02] tracking-tight text-ink-950 sm:text-6xl">
             Cover, sorted in <span className="relative whitespace-nowrap text-brand-700">under 2 minutes.</span>
@@ -45,8 +45,8 @@ export function Engage() {
           <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-brand-100/60 to-white blur-2xl" />
           <div className="rounded-3xl bg-white p-6 shadow-lift ring-1 ring-ink-100">
             <div className="flex items-center justify-between">
-              <p className="font-display text-lg font-bold text-ink-950">Build your bundle</p>
-              <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-800">Pick any mix</span>
+              <p className="font-display text-lg font-bold text-ink-950">What you can cover</p>
+              <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-800">Ready-made plans</span>
             </div>
             <ul className="mt-5 space-y-2.5">
               {PRODUCTS.map((p, i) => (

@@ -6,7 +6,7 @@ import { DemoPanel } from './DemoPanel'
 import { STEP_NUMBER, useStore, type StepId } from '../state/store'
 
 const PHASES: { label: string; steps: StepId[] }[] = [
-  { label: 'Your cover', steps: ['recommend', 'pick', 'questions'] },
+  { label: 'Your cover', steps: ['recommend', 'plans', 'pick', 'questions'] },
   { label: 'Your price', steps: ['quote'] },
   { label: 'Your details', steps: ['contact', 'payment', 'verify'] },
   { label: 'Covered', steps: ['issued', 'kyc'] },
@@ -18,7 +18,7 @@ export function Logo({ className }: { className?: string }) {
       <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-700 text-white shadow-sm">
         <ShieldCheck className="h-5 w-5" aria-hidden />
       </span>
-      <span className="font-display text-[17px] font-extrabold tracking-tight text-ink-900">
+      <span className="whitespace-nowrap font-display text-[17px] font-extrabold tracking-tight text-ink-900">
         SecureLife<span className="text-brand-600"> Bundle</span>
       </span>
     </span>
@@ -95,6 +95,7 @@ export function Screen({
   footer,
   aside,
   wide,
+  xl,
 }: {
   eyebrow?: ReactNode
   title: ReactNode
@@ -103,10 +104,11 @@ export function Screen({
   footer?: ReactNode
   aside?: ReactNode
   wide?: boolean
+  xl?: boolean
 }) {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-12 px-4 lg:py-6">
-      <main className={cx('mx-auto flex w-full min-w-0 flex-1 flex-col', wide ? 'max-w-2xl' : 'max-w-xl', aside && 'lg:mx-0')}>
+      <main className={cx('mx-auto flex w-full min-w-0 flex-1 flex-col', xl ? 'max-w-5xl' : wide ? 'max-w-2xl' : 'max-w-xl', aside && 'lg:mx-0')}>
         <div key={String(title)} className="flex flex-1 flex-col animate-fade-up">
           <div className="pt-6 sm:pt-10">
             {eyebrow && <div className="mb-3">{eyebrow}</div>}

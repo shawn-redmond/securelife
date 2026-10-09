@@ -6,6 +6,7 @@ import { maskPhone } from './lib/format'
 import { useStore, type StepId } from './state/store'
 import { Engage } from './screens/Engage'
 import { Recommend } from './screens/Recommend'
+import { Plans } from './screens/Plans'
 import { Pick } from './screens/Pick'
 import { Questions } from './screens/Questions'
 import { Quote } from './screens/Quote'
@@ -18,6 +19,7 @@ import { Kyc } from './screens/Kyc'
 const SCREENS: Record<StepId, () => React.ReactElement | null> = {
   engage: Engage,
   recommend: Recommend,
+  plans: Plans,
   pick: Pick,
   questions: Questions,
   quote: Quote,

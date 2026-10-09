@@ -15,8 +15,9 @@ npm run build      # static build in dist/ (deploy anywhere, e.g. Netlify/Vercel
 | # | Screen | Where |
 |---|--------|-------|
 | 1 | Engage — "Cover, sorted in under 2 minutes." | `src/screens/Engage.tsx` |
-| 2 | Bundle recommender (chat opener, situation checklist, skip link) | `src/screens/Recommend.tsx` |
-| 3 | Bundle picker (pre-selected, named starter bundle, motor last) | `src/screens/Pick.tsx` |
+| 2 | Recommender: 5 quick questions (travel, dependants, home, age/smoker, optional budget) | `src/screens/Recommend.tsx` |
+| 3 | Pick a plan: three ready-made tiers with amounts and final prices | `src/screens/Plans.tsx` |
+| 3b | Build my own (picker, for customers who skip the plans) | `src/screens/Pick.tsx` |
 | 4 | Per-product questions (one branch per product, cross-branch progress) | `src/screens/Questions.tsx` |
 | 5 | Bundle quote (per-line + total, upsell, per-product pricing fallback) | `src/screens/Quote.tsx` |
 | 6 | Contact capture + OTP (POPIA consent, resend countdown, save & resume) | `src/screens/Contact.tsx` |
@@ -28,7 +29,8 @@ npm run build      # static build in dist/ (deploy anywhere, e.g. Netlify/Vercel
 ## How the spec's rules are covered
 
 - **Target-market ordering**: medical, household, life, critical illness, motor everywhere; car is never the lead option. Life is framed as fast-payout funeral cover.
-- **Deterministic recommender**: a fixed mapping table plus named bundles in `src/data/recommender.ts`.
+- **Ready-made plans**: answers map to three tiers (Essential, Family or Everyday, Complete) in `src/data/plans.ts`. The middle tier is recommended, or the highest tier within the customer's budget. Taxi, bus and train commuters get medical emergency framed as road-accident cover; car owners get motor in the higher tiers. Each plan is checked against the life-class limit when it's built.
+- **The plan price is the checkout price**: plans are priced from the age band and smoker answer, and area doesn't affect price. After choosing, the customer only answers what can't be assumed (their area for household cover, their car for motor), then lands on the quote. "Change amounts" opens every question, pre-filled, and the quote labels the plan as customised.
 - **Microinsurance constraints**: every benefit is a fixed defined-benefit tier, never a replacement value. The life-class aggregate cap (R141,700) is shared across products. Amounts that would exceed it are disabled with an explanation, and the quote shows a cap meter. Caps, FSP numbers and the underwriter live in one config file: `src/config.ts`.
 - **No PII before the quote**: steps 1–5 ask for no name, ID or contact details.
 - **Verify once**: one ID check covers the whole bundle. "Add more cover" after issue reuses the verified identity, contact and payment method, so the customer goes straight from quote to activation.

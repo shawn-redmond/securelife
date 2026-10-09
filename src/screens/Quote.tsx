@@ -4,7 +4,7 @@ import { Screen } from '../components/shell'
 import { ProductIcon } from '../components/bundle'
 import { Button, Card, LinkButton } from '../components/ui'
 import { PRODUCTS, productById, sortProducts, type ProductId } from '../data/products'
-import { capFor, capUsed, quoteBundle } from '../lib/pricing'
+import { capFor, capUsed, quoteBundle, sumAssuredOf } from '../lib/pricing'
 import { config } from '../config'
 import { cx, rand, randShort } from '../lib/format'
 import { branchComplete, questionList, useStore } from '../state/store'
@@ -16,24 +16,29 @@ export function Quote() {
   const q = quoteBundle(app.selected, app.answers, state.demo.pricingUnavailable)
   const upsell = PRODUCTS.filter((p) => !app.selected.includes(p.id) && !held.includes(p.id))
   const lifeUsed = capUsed('life', app.selected, app.answers)
+  const plan = app.plan
+  const customised =
+    !!plan &&
+    (app.selected.length !== Object.keys(plan.covers).length ||
+      app.selected.some((id) => plan.covers[id] !== sumAssuredOf(id, app.answers[id])))
 
   // Guard: every selected product's answers must exist before a quote is shown.
   useEffect(() => {
     const list = questionList(app.selected)
     const firstGap = list.findIndex((it) => !branchComplete(it.product, app.answers) && it.local === 0)
-    if (app.selected.length && firstGap >= 0) set((s) => ({ step: 'questions', app: { ...s.app, qIndex: firstGap } }))
+    if (app.selected.length && firstGap >= 0) set((s) => ({ step: 'questions', app: { ...s.app, qIndex: firstGap, onlySteps: null } }))
   }, [app.selected, app.answers, set])
 
   const add = (id: ProductId) =>
     set((s) => {
       const selected = sortProducts([...s.app.selected, id])
       const list = questionList(selected)
-      return { step: 'questions', app: { ...s.app, selected, qIndex: list.findIndex((it) => it.product === id), returnToQuote: id } }
+      return { step: 'questions', app: { ...s.app, selected, qIndex: list.findIndex((it) => it.product === id), returnToQuote: id, onlySteps: null } }
     })
 
   const remove = (id: ProductId) => set((s) => ({ app: { ...s.app, selected: s.app.selected.filter((x) => x !== id) } }))
 
-  const adjust = () => set((s) => ({ step: 'questions', app: { ...s.app, qIndex: 0, returnToQuote: null } }))
+  const adjust = () => set((s) => ({ step: 'questions', app: { ...s.app, qIndex: 0, returnToQuote: null, onlySteps: null } }))
 
   if (!app.selected.length)
     return (
@@ -47,21 +52,25 @@ export function Quote() {
   return (
     <Screen
       wide
-      eyebrow={<p className="text-sm font-semibold uppercase tracking-wider text-brand-700">Your quote is ready</p>}
+      eyebrow={
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700">
+          {plan ? (customised ? `Your plan · based on ${plan.name}` : `Your ${plan.name} plan`) : 'Your quote is ready'}
+        </p>
+      }
       title={
         <>
           <span className="tabular-nums">{rand(q.total)}</span>
           <span className="text-ink-500"> /month</span>
         </>
       }
-      subtitle={`${q.priced.length} cover${q.priced.length === 1 ? '' : 's'} in one bundle · one monthly debit`}
+      subtitle={`${q.priced.length} cover${q.priced.length === 1 ? '' : 's'} in one bundle · one monthly debit · cancel anytime`}
       footer={
         <div className="space-y-3">
           <Button block disabled={!canProceed} onClick={() => set(() => ({ step: 'contact' }))}>
             Get covered now
           </Button>
           <div className="text-center">
-            <LinkButton onClick={adjust}>Adjust my cover</LinkButton>
+            <LinkButton onClick={adjust}>{plan ? 'Change amounts' : 'Adjust my cover'}</LinkButton>
           </div>
         </div>
       }

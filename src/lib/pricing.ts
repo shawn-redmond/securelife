@@ -29,9 +29,9 @@ export function priceProduct(id: ProductId, a: Answers | undefined, forceUnavail
     case 'household': {
       const sa = Number(a.tier)
       const base = { 15000: 49, 30000: 85, 60000: 149 }[sa] ?? 85
+      // Area is captured for the policy record but doesn't move the price, so a plan's price never changes at checkout.
       const typeF = { house: 1, flat: 0.9, backroom: 1.05, informal: 1.2 }[a.homeType] ?? 1
-      const areaF = 0.95 + (Number(a.postal || 0) % 7) * 0.025
-      return { ok: true, monthly: end9(base * typeF * areaF), sumAssured: sa }
+      return { ok: true, monthly: end9(base * typeF), sumAssured: sa }
     }
     case 'life': {
       const sa = Number(a.cover)

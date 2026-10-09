@@ -8,6 +8,7 @@ import { STEP_NUMBER, useStore, type KycTrigger, type StepId, type VerifyOutcome
 const STEP_LABEL: Record<StepId, string> = {
   engage: 'Engage',
   recommend: 'Bundle recommender',
+  plans: 'Plan picker',
   pick: 'Bundle picker',
   questions: 'Per-product questions',
   quote: 'Bundle quote',
@@ -40,7 +41,7 @@ export function DemoPanel() {
         onClick={() => setOpen(true)}
         className="inline-flex h-8 items-center gap-1.5 rounded-full bg-ink-950 px-3 text-xs font-semibold text-white transition hover:bg-ink-800"
       >
-        <FlaskConical className="h-3.5 w-3.5" aria-hidden /> Demo
+        <FlaskConical className="h-3.5 w-3.5" aria-hidden /> <span className="sr-only sm:not-sr-only">Demo</span>
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Demo controls">
         <p className="-mt-2 mb-5 text-sm text-ink-600">Simulate the edge states from the spec. Current screen: step {STEP_NUMBER[state.step]} – {STEP_LABEL[state.step]}.</p>

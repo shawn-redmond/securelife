@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react'
 import type { ProductId, QuestionStep } from '../data/products'
 import { productById, sortProducts } from '../data/products'
-import type { SituationId } from '../data/recommender'
+import type { Profile, TierId } from '../data/plans'
 import type { AllAnswers } from '../lib/pricing'
 
 export type StepId =
   | 'engage'
   | 'recommend'
+  | 'plans'
   | 'pick'
   | 'questions'
   | 'quote'
@@ -19,6 +20,7 @@ export type StepId =
 export const STEP_NUMBER: Record<StepId, number> = {
   engage: 1,
   recommend: 2,
+  plans: 3,
   pick: 3,
   questions: 4,
   quote: 5,
@@ -49,10 +51,14 @@ export interface PaymentInfo {
 }
 
 export interface Application {
-  situations: SituationId[]
+  profile: Profile
+  /** Which profile question is showing on the recommender. */
+  rIndex: number
   skippedRecommender: boolean
-  recommended: ProductId[]
-  bundleName: string | null
+  /** The pre-built plan chosen, kept so we can tell when it has been customised. */
+  plan: { id: TierId; name: string; covers: Partial<Record<ProductId, number>> } | null
+  /** Plan path: ask only these product steps (`product:step`). null asks every step. */
+  onlySteps: string[] | null
   selected: ProductId[]
   answers: AllAnswers
   qIndex: number
@@ -98,10 +104,11 @@ export interface State {
 }
 
 export const newApplication = (): Application => ({
-  situations: [],
+  profile: {},
+  rIndex: 0,
   skippedRecommender: false,
-  recommended: [],
-  bundleName: null,
+  plan: null,
+  onlySteps: null,
   selected: [],
   answers: {},
   qIndex: 0,
@@ -130,9 +137,9 @@ export interface QItem {
   total: number
 }
 
-export function questionList(selected: ProductId[]): QItem[] {
+export function questionList(selected: ProductId[], onlySteps: string[] | null = null): QItem[] {
   return sortProducts(selected).flatMap((product) => {
-    const steps = productById[product].steps
+    const steps = productById[product].steps.filter((st) => !onlySteps || onlySteps.includes(`${product}:${st.id}`))
     return steps.map((step, local) => ({ product, step, local, total: steps.length }))
   })
 }
@@ -145,19 +152,22 @@ export function branchComplete(product: ProductId, answers: AllAnswers) {
 export function prevStep(s: State): Partial<State> | null {
   switch (s.step) {
     case 'recommend':
-      return { step: 'engage' }
+      return s.app.rIndex > 0 ? { app: { ...s.app, rIndex: s.app.rIndex - 1 } } : { step: 'engage' }
+    case 'plans':
+      return { step: 'recommend' }
     case 'pick':
       return s.held.length ? { step: 'issued' } : { step: 'recommend' }
     case 'questions': {
-      const list = questionList(s.app.selected)
+      const list = questionList(s.app.selected, s.app.onlySteps)
       const cur = list[s.app.qIndex]
       if (s.app.returnToQuote && cur?.product === s.app.returnToQuote && cur.local === 0)
         return { step: 'quote', app: { ...s.app, returnToQuote: null } }
       if (s.app.qIndex > 0) return { app: { ...s.app, qIndex: s.app.qIndex - 1 } }
-      return { step: 'pick' }
+      return { step: s.app.plan ? 'plans' : 'pick' }
     }
     case 'quote': {
-      const list = questionList(s.app.selected)
+      const list = questionList(s.app.selected, s.app.onlySteps)
+      if (!list.length) return { step: s.app.plan ? 'plans' : 'pick' }
       return { step: 'questions', app: { ...s.app, qIndex: Math.max(0, list.length - 1), returnToQuote: null } }
     }
     case 'contact':
@@ -170,7 +180,7 @@ export function prevStep(s: State): Partial<State> | null {
 }
 
 /** Persist from step 6 onward per spec; earlier steps hold no personal data, but we keep them too so refresh never loses progress. */
-const KEY = 'securelife-bundle:v1'
+const KEY = 'securelife-bundle:v2'
 
 function load(): State | null {
   try {
