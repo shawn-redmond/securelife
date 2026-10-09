@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { Check, Pencil, Sparkles } from 'lucide-react'
+import { Car, Check, Pencil, Sparkles } from 'lucide-react'
 import { Screen } from '../components/shell'
 import { ProductIcon } from '../components/bundle'
 import { Alert, Button, LinkButton } from '../components/ui'
-import { PROFILE_QUESTIONS, buildPlans, missingSteps, planFooter, recommendTier, type Plan } from '../data/plans'
+import { MOTOR_TIERS, PROFILE_QUESTIONS, buildPlans, missingSteps, motorPrice, planFooter, recommendTier, type Plan } from '../data/plans'
 import type { AllAnswers } from '../lib/pricing'
 import { cx, rand } from '../lib/format'
 import { useStore } from '../state/store'
@@ -40,7 +40,9 @@ export function Plans() {
   const chips = PROFILE_QUESTIONS.flatMap((q) => {
     if (q.id === 'about') return profile.ageBand ? [{ emoji: '🎂', label: profile.ageBand.replace('-', '–') }] : []
     if (q.id === 'budget') return []
-    const o = q.options?.find((x) => x.value === profile[q.id as "travel" | "dependants" | "home"])
+    if (q.id === 'dependants')
+      return (q.options ?? []).filter((o) => profile.dependants?.includes(o.value as never)).map((o) => ({ emoji: o.emoji, label: o.label }))
+    const o = q.options?.find((x) => x.value === profile[q.id as 'travel' | 'home'])
     return o ? [{ emoji: o.emoji, label: o.label }] : []
   })
 
@@ -71,6 +73,46 @@ export function Plans() {
         <Alert tone="warning" className="mb-6" title={`Our lowest plan is ${rand(plans[0].monthly)} a month`}>
           That’s a bit over your {budgetLabel?.toLowerCase()} budget. You can choose Essential and remove a cover on the next screen, or build your own with a single cover.
         </Alert>
+      )}
+
+      {profile.travel === 'car' && (
+        <section aria-labelledby="motor-addon" className="mb-8 rounded-2xl bg-white p-4 ring-1 ring-ink-200 sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
+              <Car className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h2 id="motor-addon" className="font-semibold text-ink-950">
+                Add car cover to any plan
+              </h2>
+              <p className="text-sm text-ink-600">A fixed payout if your car is stolen or written off. Optional, and you can add it later.</p>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-labelledby="motor-addon">
+            {[0, ...MOTOR_TIERS].map((amt) => {
+              const on = (profile.motor ?? 0) === amt
+              return (
+                <label
+                  key={amt}
+                  className={cx(
+                    'flex min-h-[56px] cursor-pointer flex-col items-center justify-center rounded-xl px-2 text-center ring-1 transition has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand-500/30',
+                    on ? 'bg-brand-50 ring-2 ring-brand-600' : 'bg-white ring-ink-200 hover:ring-ink-300',
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="motor"
+                    className="sr-only"
+                    checked={on}
+                    onChange={() => set((s) => ({ app: { ...s.app, profile: { ...s.app.profile, motor: amt || undefined } } }))}
+                  />
+                  <span className="text-[15px] font-semibold text-ink-900">{amt ? `R${amt.toLocaleString('en-ZA')}` : 'No thanks'}</span>
+                  {amt > 0 && <span className="text-xs tabular-nums text-ink-500">+{rand(motorPrice(profile, amt))}/mo</span>}
+                </label>
+              )
+            })}
+          </div>
+        </section>
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
@@ -107,9 +149,6 @@ export function Plans() {
                     <span className="text-[15px] leading-snug text-ink-800">{b.line}</span>
                   </li>
                 ))}
-                {profile.travel === 'car' && !plan.products.includes('motor') && (
-                  <li className="pl-11 text-sm text-ink-500">Car cover can be added on the next screen.</li>
-                )}
               </ul>
 
               <Button className="mt-6" block variant={rec ? 'primary' : 'secondary'} size="md" onClick={() => choose(plan)}>

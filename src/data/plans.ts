@@ -1,27 +1,31 @@
 import type { ProductId } from './products'
 import { productById, sortProducts } from './products'
 import type { AllAnswers } from '../lib/pricing'
-import { capFor, capUsed, quoteBundle } from '../lib/pricing'
+import { capFor, capUsed, priceProduct, quoteBundle } from '../lib/pricing'
 import { config } from '../config'
 
 export type Travel = 'taxi' | 'bus' | 'car' | 'walk'
-export type Dependants = 'me' | 'partner' | 'children' | 'extended'
+export type Dependant = 'me' | 'partner' | 'children' | 'parents'
 export type Home = 'house' | 'flat' | 'informal' | 'family'
 export type Budget = 'u150' | '150-300' | 'o300' | 'any'
 
 export interface Profile {
   travel?: Travel
-  dependants?: Dependants
+  /** Several groups can depend on one person; 'me' means no one else. */
+  dependants?: Dependant[]
   home?: Home
   ageBand?: string
   smoker?: 'yes' | 'no'
   budget?: Budget
+  /** Car owners only: motor benefit added on top of any plan, as a rand amount. */
+  motor?: number
 }
 
 export interface ProfileQuestion {
   id: 'travel' | 'dependants' | 'home' | 'about' | 'budget'
   title: string
   subtitle?: string
+  multi?: boolean
   options?: { value: string; label: string; emoji: string; hint?: string }[]
 }
 
@@ -40,12 +44,13 @@ export const PROFILE_QUESTIONS: ProfileQuestion[] = [
   {
     id: 'dependants',
     title: 'Who would need help if something happened to you?',
-    subtitle: 'Pick the one that fits best.',
+    subtitle: 'Choose everyone who relies on you.',
+    multi: true,
     options: [
-      { value: 'me', label: 'Just me', emoji: '🙋', hint: 'No one relies on my income' },
       { value: 'partner', label: 'My partner', emoji: '💑' },
       { value: 'children', label: 'My children', emoji: '👨‍👩‍👧' },
-      { value: 'extended', label: 'Parents or extended family', emoji: '👵', hint: 'I help support family members' },
+      { value: 'parents', label: 'My parents or extended family', emoji: '👵', hint: 'I help support family members' },
+      { value: 'me', label: 'No one, just me', emoji: '🙋', hint: 'No one relies on my income' },
     ],
   },
   {
@@ -98,9 +103,20 @@ function medicalLine(travel: Travel | undefined, amount: number) {
   return `${R(amount)} if an accident or emergency puts you in hospital`
 }
 
-function lifeLine(dep: Dependants | undefined, amount: number) {
-  const who = { me: 'your family', partner: 'your partner', children: 'your family', extended: 'your family' }[dep ?? 'me']
-  return `${R(amount)} paid to ${who} within 48 hours for funeral costs`
+const listJoin = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`)
+
+function lifeLine(deps: Dependant[] | undefined, amount: number) {
+  const names = { partner: 'partner', children: 'children', parents: 'parents' }
+  const who = (deps ?? []).filter((d): d is keyof typeof names => d !== 'me').map((d) => names[d])
+  return `${R(amount)} paid to your ${who.length ? listJoin(who) : 'family'} within 48 hours for funeral costs`
+}
+
+export const MOTOR_TIERS = [25000, 50000, 100000]
+
+/** Monthly price of the motor add-on at a given benefit, for this profile. */
+export function motorPrice(p: Profile, amount: number) {
+  const r = priceProduct('motor', { driverAge: p.ageBand ?? '30-39', tier: String(amount) })
+  return r.ok ? r.monthly : 0
 }
 
 /**
@@ -112,8 +128,9 @@ export function buildPlans(p: Profile): Plan[] {
   const homeType = p.home === 'house' ? 'house' : p.home === 'informal' ? 'informal' : 'flat'
   const bigHome = p.home === 'house'
   const commuter = p.travel === 'taxi' || p.travel === 'bus'
-  const car = p.travel === 'car'
-  const supportsOthers = p.dependants !== 'me'
+  const supportsOthers = (p.dependants ?? []).some((d) => d !== 'me')
+  // Motor is an add-on, never part of a tier, so the tiers stay comparable for drivers and non-drivers alike.
+  const motor = p.travel === 'car' && p.motor ? { motor: p.motor } : {}
   const age = p.ageBand ?? '30-39'
   const smoker = p.smoker ?? 'no'
 
@@ -122,7 +139,7 @@ export function buildPlans(p: Profile): Plan[] {
       id: 'essential',
       name: 'Essential',
       pitch: 'The basics: funeral and emergency cover.',
-      covers: { life: supportsOthers ? 35000 : 20000, medical: commuter ? 25000 : 10000 },
+      covers: { life: supportsOthers ? 35000 : 20000, medical: commuter ? 25000 : 10000, ...motor },
     },
     {
       id: 'plus',
@@ -132,7 +149,7 @@ export function buildPlans(p: Profile): Plan[] {
         medical: 25000,
         ...(hasHome ? { household: bigHome ? 30000 : 15000 } : {}),
         life: supportsOthers ? 50000 : 35000,
-        ...(car ? { motor: 25000 } : {}),
+        ...motor,
       },
     },
     {
@@ -144,7 +161,7 @@ export function buildPlans(p: Profile): Plan[] {
         ...(hasHome ? { household: bigHome ? 60000 : 30000 } : {}),
         life: supportsOthers ? 75000 : 50000,
         critical: 30000,
-        ...(car ? { motor: 50000 } : {}),
+        ...motor,
       },
     },
   ]

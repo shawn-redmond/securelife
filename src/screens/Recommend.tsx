@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { BotBubble, Screen } from '../components/shell'
 import { Button, InlineError, LinkButton } from '../components/ui'
-import { PROFILE_QUESTIONS, type Profile } from '../data/plans'
+import { PROFILE_QUESTIONS, type Dependant, type Profile } from '../data/plans'
 import { cx } from '../lib/format'
 import { useStore } from '../state/store'
 
@@ -31,7 +31,20 @@ export function Recommend() {
   const buildOwn = () =>
     set((s) => ({ step: 'pick', app: { ...s.app, skippedRecommender: true, plan: null, onlySteps: null, selected: [], qIndex: 0 } }))
 
-  const value = q.id === 'about' ? undefined : (profile[q.id] as string | undefined)
+  const multi = !!q.multi
+  const picked = profile.dependants ?? []
+  const value = q.id === 'about' || q.id === 'dependants' ? undefined : (profile[q.id] as string | undefined)
+
+  // "No one, just me" is exclusive; any other choice clears it.
+  const toggle = (v: Dependant) => {
+    setError(null)
+    set((s) => {
+      const cur = s.app.profile.dependants ?? []
+      const nextDeps: Dependant[] =
+        v === 'me' ? (cur.includes('me') ? [] : ['me']) : cur.includes(v) ? cur.filter((x) => x !== v) : [...cur.filter((x) => x !== 'me'), v]
+      return { app: { ...s.app, profile: { ...s.app.profile, dependants: nextDeps } } }
+    })
+  }
 
   return (
     <Screen
@@ -56,7 +69,14 @@ export function Recommend() {
       title={q.title}
       subtitle={q.subtitle}
       footer={
-        q.id === 'about' ? (
+        multi ? (
+          <div className="space-y-3">
+            {error && <InlineError>{error}</InlineError>}
+            <Button block softDisabled={!picked.length} onClick={() => (picked.length ? next({}) : setError('Choose at least one'))}>
+              Continue
+            </Button>
+          </div>
+        ) : q.id === 'about' ? (
           <div className="space-y-3">
             {error && <InlineError>{error}</InlineError>}
             <Button
@@ -123,7 +143,7 @@ export function Recommend() {
           <legend className="sr-only">{q.title}</legend>
           <div className="space-y-3">
             {q.options!.map((o, i) => {
-              const on = value === o.value
+              const on = multi ? picked.includes(o.value as Dependant) : value === o.value
               return (
                 <label
                   key={o.value}
@@ -133,14 +153,18 @@ export function Recommend() {
                   )}
                   style={{ animationDelay: `${i * 50}ms` }}
                 >
-                  <input
-                    type="radio"
-                    name={q.id}
-                    className="sr-only"
-                    checked={on}
-                    onChange={() => next({ [q.id]: o.value })}
-                    onClick={() => on && next({})}
-                  />
+                  {multi ? (
+                    <input type="checkbox" className="sr-only" checked={on} onChange={() => toggle(o.value as Dependant)} />
+                  ) : (
+                    <input
+                      type="radio"
+                      name={q.id}
+                      className="sr-only"
+                      checked={on}
+                      onChange={() => next({ [q.id]: o.value })}
+                      onClick={() => on && next({})}
+                    />
+                  )}
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ink-50 text-2xl" aria-hidden>
                     {o.emoji}
                   </span>
@@ -149,7 +173,11 @@ export function Recommend() {
                     {o.hint && <span className="block text-sm text-ink-500">{o.hint}</span>}
                   </span>
                   <span
-                    className={cx('grid h-6 w-6 shrink-0 place-items-center rounded-full ring-1 ring-inset transition', on ? 'bg-brand-700 ring-brand-700' : 'bg-white ring-ink-300')}
+                    className={cx(
+                      'grid h-6 w-6 shrink-0 place-items-center ring-1 ring-inset transition',
+                      multi ? 'rounded-md' : 'rounded-full',
+                      on ? 'bg-brand-700 ring-brand-700' : 'bg-white ring-ink-300',
+                    )}
                     aria-hidden
                   >
                     <Check className={cx('h-4 w-4 text-white transition', on ? 'scale-100' : 'scale-0')} strokeWidth={3} />

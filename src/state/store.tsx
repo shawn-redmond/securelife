@@ -180,7 +180,7 @@ export function prevStep(s: State): Partial<State> | null {
 }
 
 /** Persist from step 6 onward per spec; earlier steps hold no personal data, but we keep them too so refresh never loses progress. */
-const KEY = 'securelife-bundle:v2'
+const KEY = 'securelife-bundle:v3'
 
 function load(): State | null {
   try {
