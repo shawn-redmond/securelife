@@ -1,7 +1,8 @@
 # SecureLife Bundle onboarding journey
 
-**Development handoff: user journey, flow and requirements, v12**
-Supersedes v11. Built and validated against the clickable prototype in this repository (`npm run dev`).
+Development handoff: user journey, flow and requirements (v12, supersedes v11)
+
+Built and validated against the clickable prototype in this repository (`npm run dev`).
 
 ## What changed since v11
 
@@ -18,7 +19,7 @@ Supersedes v11. Built and validated against the clickable prototype in this repo
 | Contact capture | Phone and email | Adds **first name** |
 | Waiting periods | Not in the journey | Shown wherever the claim promise appears; acknowledged at payment |
 | Identity verification | ID and selfie | Adds an **age check** against the priced age range, with re-pricing or handoff |
-| Messaging | Price-led | **Value-led**: outcomes, protection totals, per-day cost and safety nets (see section 6) |
+| Messaging | Price-led | **Value-led**: outcomes, protection totals, per-day cost and safety nets (see section 6a) |
 
 Unchanged from v11 unless noted: section 1 (product context), section 2 (microinsurance constraints), step 10 (progressive KYC), section 5 (architecture), section 6 (compliance) and the open questions in section 7, which are carried forward with additions.
 
@@ -210,7 +211,7 @@ Replaces the v11 per-product confirmation.
 
 ---
 
-## 5. Data model changes
+## 5a. Data model changes (additions to v11 section 5)
 
 - **Policy:** `number`, `version`, `startDate`, `docs`, `benefits[]` (product, sum assured, premium, addedOn), `family` (cover definition), `familyMonthly`, `members[]` (relationship, name, date of birth).
 - **Customer:** adds `firstName`.
@@ -221,7 +222,7 @@ Replaces the v11 per-product confirmation.
   - `family`, `members`
 - **Configuration** (`src/config.ts`) adds `promises` (claim payout hours, cooling-off days, customer count), `waiting` (per benefit, and family by age range) and `entryAge`. All are placeholders.
 
-## 6. Messaging principles (new)
+## 6a. Messaging principles (new, additions to v11 section 6)
 
 Position value before cost, without pressure:
 - Lead with outcomes, not sums assured.
