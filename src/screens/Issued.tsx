@@ -224,4 +224,5 @@ function downloadPolicy(state: State) {
   a.download = 'SecureLife-policy-schedule.html'
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+  notify(`Email to ${state.customer.email}`, 'A copy of your policy schedule is attached.')
 }

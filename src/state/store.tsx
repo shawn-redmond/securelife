@@ -233,7 +233,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Keep the URL hash in step with the journey so the hardware/browser back button works.
   useEffect(() => {
     const hash = `#/${state.step}`
-    if (location.hash !== hash) history.pushState(null, '', hash)
+    try {
+      if (location.hash !== hash) history.pushState(null, '', hash)
+    } catch {
+      /* sandboxed frames may block history writes */
+    }
   }, [state.step])
 
   const stateRef = useRef(state)
@@ -241,7 +245,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onPop = () => {
       // Steps past payment can't be undone — keep the user where they are.
-      if (!prevStep(stateRef.current)) return history.pushState(null, '', `#/${stateRef.current.step}`)
+      if (!prevStep(stateRef.current)) {
+        try {
+          history.pushState(null, '', `#/${stateRef.current.step}`)
+        } catch {
+          /* ignore */
+        }
+        return
+      }
       dispatch({ type: 'patch', fn: (s) => prevStep(s) ?? {} })
     }
     addEventListener('popstate', onPop)
