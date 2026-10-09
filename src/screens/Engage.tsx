@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, Clock, FileX2, Fingerprint, Sparkles } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Clock, FileX2, HandCoins, Sparkles } from 'lucide-react'
 import { Button } from '../components/ui'
 import { ProductIcon } from '../components/bundle'
 import { PRODUCTS } from '../data/products'
@@ -31,7 +31,7 @@ export function Engage() {
             {[
               { icon: Clock, t: 'Quote in 60s' },
               { icon: FileX2, t: 'Zero paperwork' },
-              { icon: Fingerprint, t: 'Verify once' },
+              { icon: HandCoins, t: `Paid in ${config.promises.claimPayoutHours}h` },
             ].map(({ icon: I, t }) => (
               <li key={t} className="flex flex-col items-start gap-2 rounded-xl bg-white/70 p-3 ring-1 ring-ink-100">
                 <I className="h-5 w-5 text-brand-600" aria-hidden />

@@ -8,6 +8,7 @@ import type { AllAnswers } from '../lib/pricing'
 import { FamilyPanel } from '../components/FamilyEditor'
 import { familyCount, familyPremium } from '../data/family'
 import { cx, rand } from '../lib/format'
+import { forWhom, perDay } from '../lib/value'
 import { useStore } from '../state/store'
 
 export function Plans() {
@@ -71,7 +72,7 @@ export function Plans() {
           </button>
         </div>
       }
-      title="Pick your plan"
+      title={`Plans for ${forWhom(profile.dependants)}`}
       subtitle="Prices are set for your answers and won’t change at checkout. You can change any amount after choosing."
     >
       {overBudget && (
@@ -150,9 +151,10 @@ export function Plans() {
                 <p className="text-right">
                   <span className="font-display text-3xl font-extrabold tabular-nums text-ink-950">{rand(plan.monthly)}</span>
                   <span className="text-sm font-medium text-ink-500">/mo</span>
+                  <span className="block text-xs font-medium text-ink-500">about R{perDay(plan.monthly)} a day</span>
                 </p>
               </div>
-              <p className="mt-1 text-sm text-ink-600">{plan.pitch}</p>
+              <p className="mt-2 text-[15px] font-medium leading-snug text-ink-800">{plan.pitch}</p>
 
               <ul className="mt-5 flex-1 space-y-3.5">
                 {plan.benefits.map((b) => (

@@ -47,6 +47,18 @@ npm run build      # static build in dist/ (deploy anywhere, e.g. Netlify/Vercel
   - Names and dates of birth are collected after contact capture, on the "Who's covered" screen (`src/screens/Members.tsx`). A date of birth outside the age range a person was priced at is flagged, with a one-tap fix that re-prices them.
   - Children's payouts step down by age. The amounts, rates and children's limits are placeholders that compliance must confirm.
 
+## Value, not just cost
+
+The copy is written so customers see what they get before what they pay, without pressure tactics:
+
+- **Plans:** each plan leads with an outcome line, shows the cost per day as well as per month, and the title uses the customer's own answers ("Plans for you, your partner and your children").
+- **Quote:** an "Up to R___ in payouts, protecting you, your partner, …" banner sits above the price.
+- **Family details:** each person shows "Nomsa is covered for R20,000" as soon as their details are complete.
+- **Payment:** "From today, 7 people are protected" sits above the button, with the safety nets (month to month, cooling-off period, cancel anytime) and the claim promise nearby.
+- **Policy issued:** a personal headline, and a pre-written WhatsApp message so family members know who to call.
+
+The claim payout time, cooling-off period and customer count are placeholders in `config.promises` (`src/config.ts`). They must be true before go-live (FSCA Treating Customers Fairly and advertising rules).
+
 ## Demo controls
 
 The **Demo** pill in the header lets a presenter trigger every edge state in the spec:

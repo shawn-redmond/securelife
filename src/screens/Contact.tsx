@@ -15,6 +15,7 @@ export function Contact() {
   const { state, set } = useStore()
   const c = state.customer
   const [phase, setPhase] = useState<'form' | 'otp' | 'done'>(c.contactVerified ? 'done' : 'form')
+  const [firstName, setFirstName] = useState(c.firstName)
   const [phone, setPhone] = useState(c.phone)
   const [email, setEmail] = useState(c.email)
   const [consent, setConsent] = useState(false)
@@ -24,7 +25,8 @@ export function Contact() {
 
   const phoneErr = normalisePhone(phone) ? null : phone ? 'Enter a valid South African cell number' : 'Enter your cell number'
   const emailErr = isEmail(email) ? null : email ? 'Enter a valid email address' : 'Enter your email address'
-  const valid = !phoneErr && !emailErr && consent
+  const nameErr = firstName.trim() ? null : 'Tell us what to call you'
+  const valid = !nameErr && !phoneErr && !emailErr && consent
 
   const sendCode = () => {
     otp.current = { code: genCode(), issuedAt: Date.now() }
@@ -85,7 +87,7 @@ export function Contact() {
           }
           if (entered !== otp.current.code) return 'wrong'
           const normal = normalisePhone(phone)!
-          set((s) => ({ customer: { ...s.customer, phone: normal, email: email.trim(), contactVerified: true } }))
+          set((s) => ({ customer: { ...s.customer, firstName: firstName.trim(), phone: normal, email: email.trim(), contactVerified: true } }))
           notify(`Email to ${email.trim()}`, 'Your SecureLife Bundle application is saved. Tap the link in this message to pick up where you left off.')
           setTimeout(() => set((s) => ({ step: needsMembers(s) ? 'members' : 'payment' })), 900)
           return 'ok'
@@ -110,6 +112,14 @@ export function Contact() {
       }
     >
       <div className="space-y-5">
+        <TextField
+          label="First name"
+          autoComplete="given-name"
+          placeholder="What should we call you?"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          error={touched ? nameErr : null}
+        />
         <TextField
           label="Cell number"
           type="tel"

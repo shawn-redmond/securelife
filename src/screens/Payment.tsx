@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ChevronDown, CreditCard, Landmark, Lock, ShieldCheck } from 'lucide-react'
+import { Check, ChevronDown, CreditCard, HeartHandshake, Landmark, Lock, MessageCircle, ShieldCheck } from 'lucide-react'
+import { livesCount } from '../lib/value'
 import { Screen } from '../components/shell'
 import { ProductIcon } from '../components/bundle'
 import { Alert, Button, Checkbox, InlineError, SelectField, TextField } from '../components/ui'
@@ -43,6 +44,11 @@ export function Payment() {
   const [summaryOpen, setSummaryOpen] = useState(false)
 
   const existing = state.policy ? state.app.payment : null
+  const childCount = state.app.members.filter((m) => m.key.startsWith('child')).length
+  const withFamily = q.priced.includes('life')
+  const lives = livesCount(withFamily ? state.app.family : null, childCount)
+  const protectedLine =
+    lives === 1 ? 'From today, you’re protected.' : `From today, ${lives ?? 'your'} ${lives ? 'people are' : 'family is'} protected.`
   const errs = existing
     ? {}
     : method === 'card'
@@ -93,13 +99,25 @@ export function Payment() {
       footer={
         <div className="space-y-3">
           {submitted && !confirm && <InlineError>Please confirm you’ve read the policy summary</InlineError>}
+          <p className="flex items-center justify-center gap-1.5 text-center text-sm font-semibold text-brand-800">
+            <HeartHandshake className="h-4 w-4 shrink-0" aria-hidden />
+            {protectedLine}
+          </p>
           <Button block softDisabled={!valid} loading={busy} onClick={activate} icon={!busy && <Lock className="h-4 w-4" aria-hidden />}>
             {busy ? 'Activating…' : 'Activate my cover'}
           </Button>
-          <p className="text-center text-xs text-ink-500">Your cover starts provisionally now and goes fully live once you’ve verified your ID.</p>
+          <p className="text-center text-xs text-ink-500">Cover starts provisionally now and goes fully live once you’ve verified your ID.</p>
         </div>
       }
     >
+      <ul className="-mt-2 mb-6 flex flex-wrap gap-2" aria-label="Your safety nets">
+        {['Month to month', `${config.promises.coolingOffDays}-day cooling-off`, 'Cancel anytime'].map((t) => (
+          <li key={t} className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-ink-700 ring-1 ring-ink-200">
+            <Check className="h-3.5 w-3.5 text-brand-600" aria-hidden /> {t}
+          </li>
+        ))}
+      </ul>
+
       {declined && (
         <Alert tone="error" className="mb-5" title="Your payment didn’t go through.">
           Try another card, or{' '}
@@ -263,9 +281,17 @@ export function Payment() {
         )}
       </div>
 
+      <div className="mt-4 flex gap-3 rounded-2xl bg-brand-50 p-4 text-sm text-brand-900 ring-1 ring-inset ring-brand-200">
+        <MessageCircle className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" aria-hidden />
+        <p>
+          <span className="font-semibold">If something happens, one WhatsApp is all it takes.</span> We pay valid claims within{' '}
+          {config.promises.claimPayoutHours} hours. Join {config.promises.customersLabel} already covered.
+        </p>
+      </div>
+
       <div className="mt-5">
         <Checkbox checked={confirm} onChange={setConfirm}>
-          I’ve read and understood the policy summary for every cover in my bundle.
+          I’ve read and understood the policy summary for every benefit on my policy.
         </Checkbox>
       </div>
     </Screen>

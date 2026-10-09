@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CircleCheck, Download, FileText, LoaderCircle, Mail, MessageCircle, Phone, Plus, UserPlus } from 'lucide-react'
+import { Check, CircleCheck, Copy, Download, FileText, HeartHandshake, LoaderCircle, Mail, MessageCircle, Phone, Plus, UserPlus } from 'lucide-react'
 import { Screen, Sheet } from '../components/shell'
 import { ProductIcon } from '../components/bundle'
 import { Badge, Button, Card, SelectField, TextField } from '../components/ui'
@@ -19,6 +19,18 @@ export function Issued() {
   const retrying = policy.docs === 'retrying'
   const updated = policy.version > 1
   const lives = livesCovered(policy)
+  const name = state.customer.firstName
+  const hasFamily = lives.length > 1
+  const headline = updated
+    ? `${name ? `${name}, your` : 'Your'} policy is updated`
+    : hasFamily
+      ? `${name ? `${name}, your` : 'Your'} family is covered`
+      : `${name ? `${name}, you’re` : 'You’re'} covered`
+  const shareText =
+    `Hi, it's ${name || 'me'}. I've taken out cover with ${config.brand}` +
+    (hasFamily ? ' that includes funeral cover for you too.' : '.') +
+    ` If anything ever happens, WhatsApp ${config.brand} on ${config.support.whatsapp} and quote policy ${policy.number}.` +
+    ` They pay valid claims within ${config.promises.claimPayoutHours} hours. Please save this message.`
 
   // One document for the whole policy; if it fails it is retried and sent as soon as it's ready.
   useEffect(() => {
@@ -50,7 +62,7 @@ export function Issued() {
           <CircleCheck className="h-9 w-9" aria-hidden />
         </span>
       }
-      title={updated ? 'Your policy is updated' : 'You’re covered'}
+      title={headline}
       subtitle={
         updated
           ? `We’ve added the new benefits to your policy. The updated policy document is on its way to ${state.customer.email}.`
@@ -137,6 +149,25 @@ export function Issued() {
         </section>
       )}
 
+      <section className="mt-6 rounded-2xl bg-white p-5 ring-1 ring-ink-100">
+        <p className="flex items-center gap-2 font-semibold text-ink-950">
+          <HeartHandshake className="h-5 w-5 text-brand-600" aria-hidden /> Let your family know they’re covered
+        </p>
+        <p className="mt-1 text-sm text-ink-600">The people you love should know who to call. Send them this on WhatsApp:</p>
+        <blockquote className="mt-3 rounded-xl rounded-tl-sm bg-[#e7f7ef] p-3 text-sm leading-relaxed text-ink-800">{shareText}</blockquote>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#1fa855] px-4 text-sm font-semibold text-white transition hover:bg-[#178a45]"
+          >
+            <MessageCircle className="h-4 w-4" aria-hidden /> Share on WhatsApp
+          </a>
+          <CopyButton text={shareText} />
+        </div>
+      </section>
+
       {state.beneficiaries.length > 0 && (
         <div className="mt-6">
           <h2 className="text-sm font-bold uppercase tracking-wider text-ink-500">Beneficiaries</h2>
@@ -188,6 +219,25 @@ export function Issued() {
 
       <BeneficiarySheet open={benOpen} onClose={() => setBenOpen(false)} />
     </Screen>
+  )
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <Button
+      size="md"
+      variant="secondary"
+      onClick={() =>
+        navigator.clipboard
+          ?.writeText(text)
+          .then(() => setCopied(true))
+          .catch(() => setCopied(false))
+      }
+      icon={copied ? <Check className="h-4 w-4 text-brand-600" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+    >
+      {copied ? 'Copied' : 'Copy message'}
+    </Button>
   )
 }
 

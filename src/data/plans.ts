@@ -138,13 +138,13 @@ export function buildPlans(p: Profile): Plan[] {
     {
       id: 'essential',
       name: 'Essential',
-      pitch: 'The basics: funeral and emergency cover.',
+      pitch: supportsOthers ? 'No borrowing or asking around to give you a dignified funeral.' : 'A dignified funeral and help in an emergency, without borrowing.',
       covers: { life: supportsOthers ? 35000 : 20000, medical: commuter ? 25000 : 10000, ...motor },
     },
     {
       id: 'plus',
       name: supportsOthers ? 'Family' : 'Everyday',
-      pitch: supportsOthers ? 'Protects the people who rely on you and what you own.' : 'Your health, your things and your future, covered.',
+      pitch: supportsOthers ? 'If the worst happens, the people who rely on you are looked after.' : 'Back on your feet quickly after a setback, whatever it is.',
       covers: {
         medical: 25000,
         ...(hasHome ? { household: bigHome ? 30000 : 15000 } : {}),
@@ -155,7 +155,7 @@ export function buildPlans(p: Profile): Plan[] {
     {
       id: 'complete',
       name: 'Complete',
-      pitch: 'Our fullest cover, including critical illness.',
+      pitch: 'Ready for life’s biggest shocks, so your family can focus on each other.',
       covers: {
         medical: 25000,
         ...(hasHome ? { household: bigHome ? 60000 : 30000 } : {}),

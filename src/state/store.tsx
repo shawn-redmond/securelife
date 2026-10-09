@@ -88,6 +88,7 @@ export interface Application {
 }
 
 export interface Customer {
+  firstName: string
   phone: string
   email: string
   contactVerified: boolean
@@ -141,7 +142,7 @@ export const newApplication = (): Application => ({
 export const initialState = (): State => ({
   step: 'engage',
   app: newApplication(),
-  customer: { phone: '', email: '', contactVerified: false, idNumber: '', identityVerified: false },
+  customer: { firstName: '', phone: '', email: '', contactVerified: false, idNumber: '', identityVerified: false },
   policy: null,
   beneficiaries: [],
   kycTrigger: null,
@@ -208,7 +209,7 @@ export function prevStep(s: State): Partial<State> | null {
 }
 
 /** Persist from step 6 onward per spec; earlier steps hold no personal data, but we keep them too so refresh never loses progress. */
-const KEY = 'securelife-bundle:v4'
+const KEY = 'securelife-bundle:v5'
 
 function load(): State | null {
   try {

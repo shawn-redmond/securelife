@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { CircleCheck, Plus, Trash2 } from 'lucide-react'
 import { Screen } from '../components/shell'
 import { Button, Checkbox, InlineError, SelectField, TextField } from '../components/ui'
 import { bandLabel, childAmount, type FamilyBand, type MemberDetail } from '../data/family'
@@ -113,7 +113,7 @@ export function Members() {
 
   return (
     <Screen
-      title="Who’s covered"
+      title="Who you’re protecting"
       subtitle={`Tell us about the family members on your funeral cover. Each adult gets ${rand(family.amount)}.`}
       footer={
         <div className="space-y-3">
@@ -162,6 +162,12 @@ export function Members() {
                   hint={s.kind === 'child' && age !== null && age <= 21 ? `Funeral payout ${rand(childAmount(family.amount, age))}` : undefined}
                   onChange={(ev) => patch(s.key, { dob: fmtDob(ev.target.value) })}
                 />
+                {Object.keys(allErrors[i]).length === 0 && (
+                  <p className="flex items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-800 animate-fade-up">
+                    <CircleCheck className="h-4 w-4 shrink-0" aria-hidden />
+                    {s.name.trim().split(/\s+/)[0]} is covered for {rand(s.kind === 'child' && age !== null ? childAmount(family.amount, age) : family.amount)}
+                  </p>
+                )}
                 {e.fixBand && (
                   <Button size="sm" variant="secondary" onClick={() => fixBand(s, e.fixBand!)}>
                     Update to {bandLabel(e.fixBand)} (price will change)

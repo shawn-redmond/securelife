@@ -29,6 +29,13 @@ export const config = {
     expirySeconds: 300,
   },
   docsSla: { targetMinutes: 5, ceilingHours: 24 },
+  /** PLACEHOLDERS: value messages must only state what is true. Confirm before go-live. */
+  promises: {
+    claimPayoutHours: 48,
+    coolingOffDays: 31,
+    /** Shown as social proof only once it is a real, current figure. */
+    customersLabel: '10,000+ families',
+  },
   upload: {
     maxBytes: 5 * 1024 * 1024,
     accept: ['application/pdf', 'image/jpeg', 'image/png'],

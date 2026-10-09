@@ -9,6 +9,9 @@ import { PRODUCTS, productById, sortProducts, type ProductId } from '../data/pro
 import { capFor, capUsed, quoteBundle, sumAssuredOf } from '../lib/pricing'
 import { config } from '../config'
 import { cx, rand, randShort } from '../lib/format'
+import { perDay, totalProtection, whoProtected } from '../lib/value'
+
+const randLong = (n: number) => `R${n.toLocaleString('en-ZA')}`
 import { branchComplete, heldProducts, questionList, useStore } from '../state/store'
 
 export function Quote() {
@@ -19,6 +22,8 @@ export function Quote() {
   const upsell = PRODUCTS.filter((p) => !app.selected.includes(p.id) && !held.includes(p.id))
   const lifeUsed = capUsed('life', app.selected, app.answers)
   const plan = app.plan
+  const protection = totalProtection(q.priced, app.answers, app.family)
+  const protectedWho = whoProtected(app.family, 0, q.priced.includes('life'))
   const customised =
     !!plan &&
     (app.selected.length !== Object.keys(plan.covers).length ||
@@ -55,9 +60,22 @@ export function Quote() {
     <Screen
       wide
       eyebrow={
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700">
-          {plan ? (customised ? `Your plan · based on ${plan.name}` : `Your ${plan.name} plan`) : 'Your quote is ready'}
-        </p>
+        <div className="space-y-4">
+          <p className="text-sm font-semibold uppercase tracking-wider text-brand-700">
+            {plan ? (customised ? `Your plan · based on ${plan.name}` : `Your ${plan.name} plan`) : 'Your quote is ready'}
+          </p>
+          {canProceed && (
+            <div className="flex items-start gap-3 rounded-2xl bg-brand-700 p-4 text-white shadow-lift">
+              <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-brand-200" aria-hidden />
+              <div>
+                <p className="font-display text-xl font-extrabold leading-tight">Up to {randLong(protection)} in payouts</p>
+                <p className="mt-0.5 text-sm text-brand-100">
+                  Protecting {protectedWho}. Paid within {config.promises.claimPayoutHours} hours of a valid claim.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       }
       title={
         <>
@@ -65,7 +83,7 @@ export function Quote() {
           <span className="text-ink-500"> /month</span>
         </>
       }
-      subtitle={`${q.priced.length} benefit${q.priced.length === 1 ? '' : 's'} on one policy · one monthly debit · cancel anytime`}
+      subtitle={`About R${perDay(q.total)} a day · ${q.priced.length} benefit${q.priced.length === 1 ? '' : 's'} on one policy · cancel anytime`}
       footer={
         <div className="space-y-3">
           <Button block disabled={!canProceed} onClick={() => set(() => ({ step: 'contact' }))}>
