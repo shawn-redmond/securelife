@@ -9,25 +9,33 @@ import { config } from '../config'
 import { longDate, maskPhone, rand, randShort } from '../lib/format'
 import { normalisePhone } from '../lib/validation'
 import { newApplication, useStore, type Policy, type State } from '../state/store'
+import { childAmount, familyCount } from '../data/family'
 
 export function Issued() {
   const { state, set } = useStore()
   const [benOpen, setBenOpen] = useState(false)
-  const total = state.held.reduce((s, p) => s + p.monthly, 0)
-  const retrying = state.held.some((p) => p.docs === 'retrying')
+  const policy = state.policy!
+  const total = policy.benefits.reduce((s, b) => s + b.monthly, 0) + policy.familyMonthly
+  const retrying = policy.docs === 'retrying'
+  const updated = policy.version > 1
+  const lives = livesCovered(policy)
 
-  // A failed document is retried on its own — it never blocks the rest of the bundle.
+  // One document for the whole policy; if it fails it is retried and sent as soon as it's ready.
   useEffect(() => {
     if (!retrying) return
     const t = setTimeout(() => {
-      set((s) => ({ held: s.held.map((p) => (p.docs === 'retrying' ? { ...p, docs: 'sent' } : p)), demo: { ...s.demo, docFailure: false } }))
-      notify(`Email to ${state.customer.email}`, 'The last of your policy documents is attached.')
+      set((s) => ({ policy: s.policy && { ...s.policy, docs: 'sent' }, demo: { ...s.demo, docFailure: false } }))
+      notify(`Email to ${state.customer.email}`, `Your policy document for ${policy.number} is attached.`)
     }, 6000)
     return () => clearTimeout(t)
-  }, [retrying, set, state.customer.email])
+  }, [retrying, set, state.customer.email, policy.number])
 
   useEffect(() => {
-    notify(`Email to ${state.customer.email}`, `Welcome to ${config.brand}! Your policy documents are attached.`)
+    if (!retrying)
+      notify(
+        `Email to ${state.customer.email}`,
+        updated ? `Your updated policy ${policy.number} (version ${policy.version}) is attached.` : `Welcome to ${config.brand}! Your policy ${policy.number} is attached.`,
+      )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -42,8 +50,12 @@ export function Issued() {
           <CircleCheck className="h-9 w-9" aria-hidden />
         </span>
       }
-      title="You’re covered"
-      subtitle={`Your documents are on their way to ${state.customer.email}. Cover started today, ${longDate(new Date())}.`}
+      title={updated ? 'Your policy is updated' : 'You’re covered'}
+      subtitle={
+        updated
+          ? `We’ve added the new benefits to your policy. The updated policy document is on its way to ${state.customer.email}.`
+          : `Your policy document is on its way to ${state.customer.email}. Cover started today, ${longDate(new Date(policy.startDate))}.`
+      }
       footer={
         <div className="grid gap-3 sm:grid-cols-2">
           <Button block onClick={() => downloadPolicy(state)} icon={<Download className="h-5 w-5" aria-hidden />}>
@@ -55,41 +67,74 @@ export function Issued() {
         </div>
       }
     >
-      <Card className="divide-y divide-ink-100">
-        {state.held.map((p) => (
-          <div key={p.number} className="flex items-center gap-4 p-4 sm:p-5">
-            <ProductIcon id={p.product} />
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-ink-950">{productById[p.product].name}</p>
-              <p className="text-sm text-ink-500">
-                {p.number} · {randShort(p.sumAssured)} benefit
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="font-semibold tabular-nums text-ink-900">{rand(p.monthly)}</p>
-              {p.docs === 'sent' ? (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700">
-                  <Mail className="h-3.5 w-3.5" aria-hidden /> Docs sent
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
-                  <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> Sending separately
-                </span>
-              )}
-            </div>
+      <Card>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-ink-100 p-4 sm:p-5">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">Policy number</p>
+            <p className="font-display text-xl font-extrabold tracking-tight text-ink-950">{policy.number}</p>
           </div>
-        ))}
-        <div className="grid grid-cols-2 gap-4 bg-ink-50/60 p-4 text-sm sm:grid-cols-3 sm:p-5">
+          <div className="flex flex-col items-end gap-1">
+            {updated && <Badge tone="ink">Version {policy.version}</Badge>}
+            {retrying ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> Document on its way
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700">
+                <Mail className="h-3.5 w-3.5" aria-hidden /> Policy document sent
+              </span>
+            )}
+          </div>
+        </div>
+
+        <p className="px-4 pt-4 text-xs font-bold uppercase tracking-wider text-ink-500 sm:px-5">
+          {policy.benefits.length} benefit{policy.benefits.length === 1 ? '' : 's'}
+        </p>
+        <ul className="divide-y divide-ink-100">
+          {policy.benefits.map((b) => {
+            const isNew = updated && b.addedOn !== policy.startDate && b.addedOn === latestAdd(policy)
+            const monthly = b.product === 'life' ? b.monthly + policy.familyMonthly : b.monthly
+            return (
+              <li key={b.product} className="flex items-center gap-4 px-4 py-3.5 sm:px-5">
+                <ProductIcon id={b.product} />
+                <div className="min-w-0 flex-1">
+                  <p className="flex flex-wrap items-center gap-2 font-semibold text-ink-950">
+                    {productById[b.product].name} {isNew && <Badge>New</Badge>}
+                  </p>
+                  <p className="text-sm text-ink-500">
+                    {randShort(b.sumAssured)} benefit
+                    {b.product === 'life' && familyCount(policy.family) > 0 && ` · plus ${familyCount(policy.family)} family`}
+                  </p>
+                </div>
+                <p className="font-semibold tabular-nums text-ink-900">{rand(monthly)}</p>
+              </li>
+            )
+          })}
+        </ul>
+        <div className="grid grid-cols-2 gap-4 border-t border-ink-100 bg-ink-50/60 p-4 text-sm sm:grid-cols-3 sm:p-5">
           <Stat label="Monthly total" value={rand(total)} />
           <Stat label="Paying by" value={state.app.payment?.label ?? 'On file'} />
           <Stat label="First debit" value={firstDebit ? (/^\d+$/.test(firstDebit) ? `${firstDebit} ${new Date().toLocaleString('en-ZA', { month: 'long' })}` : firstDebit) : 'Today'} />
         </div>
       </Card>
 
-      {retrying && (
-        <p className="mt-3 text-sm text-ink-600">
-          One document is taking a little longer. We’ll email it separately — the rest of your cover is already active.
-        </p>
+      {retrying && <p className="mt-3 text-sm text-ink-600">Your policy document is taking a little longer. Your cover is already active and we’ll email it shortly.</p>}
+
+      {lives.length > 1 && (
+        <section className="mt-6">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-ink-500">Who’s covered for funerals</h2>
+          <ul className="mt-2 divide-y divide-ink-100 rounded-2xl bg-white ring-1 ring-ink-100">
+            {lives.map((l) => (
+              <li key={l.key} className="flex items-center justify-between gap-3 p-3 text-sm">
+                <span className="min-w-0">
+                  <span className="font-semibold text-ink-900">{l.name}</span>
+                  <span className="text-ink-500"> · {l.relation}</span>
+                </span>
+                <span className="shrink-0 tabular-nums text-ink-700">{rand(l.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {state.beneficiaries.length > 0 && (
@@ -113,11 +158,11 @@ export function Issued() {
           <p className="flex items-center gap-2 font-semibold text-ink-950">
             <FileText className="h-5 w-5 text-brand-600" aria-hidden /> How to claim
           </p>
-          <p className="mt-1 text-sm text-ink-500">The claims process differs slightly by product:</p>
+          <p className="mt-1 text-sm text-ink-500">Quote your policy number. What we need depends on the benefit:</p>
           <ul className="mt-3 space-y-2 text-sm text-ink-700">
-            {state.held.map((p) => (
-              <li key={p.number}>
-                <span className="font-semibold">{productById[p.product].short}:</span> {productById[p.product].claimsNote}
+            {policy.benefits.map((b) => (
+              <li key={b.product}>
+                <span className="font-semibold">{productById[b.product].short}:</span> {productById[b.product].claimsNote}
               </li>
             ))}
           </ul>
@@ -129,19 +174,46 @@ export function Issued() {
             <a href={config.support.whatsappLink} target="_blank" rel="noreferrer" className="flex items-center gap-2 font-semibold text-brand-700 hover:underline">
               <MessageCircle className="h-4 w-4" aria-hidden /> WhatsApp {config.support.whatsapp}
             </a>
-            <a href={`tel:${config.support.phone.replace(/\s/g, '')}`} className="flex items-center gap-2 font-semibold text-brand-700 hover:underline">
-              <Phone className="h-4 w-4" aria-hidden /> Call {config.support.phone}
-            </a>
+            <p className="flex items-center gap-2 font-semibold text-ink-700">
+              <Phone className="h-4 w-4 text-brand-700" aria-hidden /> Call {config.support.phone}
+            </p>
           </div>
-          <button onClick={addMore} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-700 hover:text-brand-700">
-            <Plus className="h-4 w-4" aria-hidden /> Add more cover — no new ID check
-          </button>
+          {policy.benefits.length < 5 && (
+            <button onClick={addMore} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-700 hover:text-brand-700">
+              <Plus className="h-4 w-4" aria-hidden /> Add a benefit to this policy
+            </button>
+          )}
         </div>
       </div>
 
       <BeneficiarySheet open={benOpen} onClose={() => setBenOpen(false)} />
     </Screen>
   )
+}
+
+const latestAdd = (p: Policy) => p.benefits.reduce((m, b) => (b.addedOn > m ? b.addedOn : m), '')
+
+/** Everyone with a funeral benefit on the policy: the policyholder first, then family members. */
+function livesCovered(p: Policy) {
+  const life = p.benefits.find((b) => b.product === 'life')
+  if (!life) return []
+  const out = [{ key: 'you', name: 'You', relation: 'Policyholder', amount: life.sumAssured }]
+  for (const m of p.members) {
+    const age = ageFromDob(m.dob)
+    const amount = m.key.startsWith('child') && age !== null ? childAmount(p.family?.amount ?? 0, age) : (p.family?.amount ?? 0)
+    out.push({ key: m.key, name: m.name, relation: m.relation, amount })
+  }
+  return out
+}
+
+function ageFromDob(dob: string) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dob)
+  if (!m) return null
+  const b = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]))
+  const now = new Date()
+  let a = now.getFullYear() - b.getFullYear()
+  if (now < new Date(now.getFullYear(), b.getMonth(), b.getDate())) a--
+  return a
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -205,24 +277,27 @@ function BeneficiarySheet({ open, onClose }: { open: boolean; onClose: () => voi
 }
 
 function downloadPolicy(state: State) {
-  const rows = state.held
-    .map(
-      (p: Policy) =>
-        `<tr><td>${productById[p.product].name}</td><td>${p.number}</td><td>R${p.sumAssured.toLocaleString('en-ZA')}</td><td>R${p.monthly}</td><td>${longDate(new Date(p.startDate))}</td></tr>`,
-    )
+  const p = state.policy!
+  const rows = p.benefits
+    .map((b) => `<tr><td>${productById[b.product].name}</td><td>R${b.sumAssured.toLocaleString('en-ZA')}</td><td>R${b.monthly}</td><td>${longDate(new Date(b.addedOn))}</td></tr>`)
     .join('')
-  const total = state.held.reduce((s, p) => s + p.monthly, 0)
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${config.brand} – Policy schedule</title>
-<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;color:#1a1e2b}h1{color:#04755c}table{width:100%;border-collapse:collapse;margin:24px 0}td,th{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}th{background:#f6f7f9;font-size:13px;text-transform:uppercase;letter-spacing:.04em}small{color:#667391}</style></head>
-<body><h1>${config.brand} – Policy schedule</h1><p>Policyholder contact: ${maskPhone(state.customer.phone)} · ${state.customer.email}<br/>Identity verified: Yes (FICA)</p>
-<table><thead><tr><th>Cover</th><th>Policy no.</th><th>Fixed benefit</th><th>Monthly</th><th>Start date</th></tr></thead><tbody>${rows}</tbody>
-<tfoot><tr><th colspan="3">Total monthly premium</th><th colspan="2">R${total}</th></tr></tfoot></table>
+  const lives = livesCovered(p)
+    .map((l) => `<tr><td>${l.name}</td><td>${l.relation}</td><td>R${l.amount.toLocaleString('en-ZA')}</td></tr>`)
+    .join('')
+  const famRow = p.familyMonthly ? `<tr><td>Family funeral cover (${familyCount(p.family)} lives)</td><td>See lives covered</td><td>R${p.familyMonthly}</td><td></td></tr>` : ''
+  const total = p.benefits.reduce((s, b) => s + b.monthly, 0) + p.familyMonthly
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${config.brand} – Policy ${p.number}</title>
+<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;color:#1a1e2b}h1{color:#04755c;margin-bottom:4px}h2{margin-top:32px;font-size:16px}table{width:100%;border-collapse:collapse;margin:12px 0}td,th{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}th{background:#f6f7f9;font-size:13px;text-transform:uppercase;letter-spacing:.04em}small{color:#667391}</style></head>
+<body><h1>${config.brand} policy schedule</h1><p><strong>Policy number ${p.number}</strong> · version ${p.version} · started ${longDate(new Date(p.startDate))}<br/>Policyholder contact: ${maskPhone(state.customer.phone)} · ${state.customer.email} · Identity verified (FICA)</p>
+<h2>Benefits</h2><table><thead><tr><th>Benefit</th><th>Fixed amount</th><th>Monthly</th><th>Added</th></tr></thead><tbody>${rows}${famRow}</tbody>
+<tfoot><tr><th colspan="2">Total monthly premium</th><th colspan="2">R${total}</th></tr></tfoot></table>
+${lives ? `<h2>Lives covered for funerals</h2><table><thead><tr><th>Name</th><th>Relationship</th><th>Funeral payout</th></tr></thead><tbody>${lives}</tbody></table>` : ''}
 <p><small>${config.brand} is an authorised FSP (${config.brandFsp}). Underwritten by ${config.underwriter.name} (${config.underwriter.fsp}). Benefits are fixed amounts payable on a covered event; no investment or cash-back component. PROTOTYPE DOCUMENT – NOT A REAL POLICY.</small></p></body></html>`
   const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
   const a = document.createElement('a')
   a.href = url
-  a.download = 'SecureLife-policy-schedule.html'
+  a.download = `SecureLife-policy-${p.number}.html`
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
-  notify(`Email to ${state.customer.email}`, 'A copy of your policy schedule is attached.')
+  notify(`Email to ${state.customer.email}`, `A copy of policy ${p.number} is attached.`)
 }

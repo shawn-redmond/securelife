@@ -5,12 +5,12 @@ import { BundleSummary, ProductIcon } from '../components/bundle'
 import { Badge, Button, InlineError } from '../components/ui'
 import { PRODUCTS, sortProducts, type ProductId } from '../data/products'
 import { cx } from '../lib/format'
-import { useStore } from '../state/store'
+import { heldProducts, useStore } from '../state/store'
 
 export function Pick() {
   const { state, set } = useStore()
   const { app } = state
-  const held = state.held.map((p) => p.product)
+  const held = heldProducts(state)
   const [error, setError] = useState(false)
   const addingMore = held.length > 0
 
@@ -29,18 +29,18 @@ export function Pick() {
 
   return (
     <Screen
-      title={addingMore ? 'Add more cover to your bundle' : 'Build your bundle'}
+      title={addingMore ? 'Add a benefit to your policy' : 'Build your policy'}
       subtitle={
         addingMore
-          ? 'You’re already verified, so adding cover takes seconds — no ID check again.'
-          : 'Choose any mix of covers. You’ll see your price before we ask for any personal details.'
+          ? 'It goes on your existing policy. You’re already verified, so there’s no ID check again.'
+          : 'Each cover you choose becomes a benefit on one policy. You’ll see your price before we ask for any personal details.'
       }
       aside={<BundleSummary />}
       footer={
         <div className="space-y-3">
           {error && <InlineError>Choose at least one cover to continue</InlineError>}
           <Button block softDisabled={!app.selected.length} onClick={next}>
-            Continue{app.selected.length > 0 && ` with ${app.selected.length} cover${app.selected.length > 1 ? 's' : ''}`}
+            Continue{app.selected.length > 0 && ` with ${app.selected.length} benefit${app.selected.length > 1 ? 's' : ''}`}
           </Button>
         </div>
       }
@@ -66,7 +66,7 @@ export function Pick() {
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="text-[16px] font-bold text-ink-950">{p.name}</span>
-                    {isHeld && <Badge tone="ink">Already covered</Badge>}
+                    {isHeld && <Badge tone="ink">On your policy</Badge>}
                   </span>
                   <span className="mt-0.5 block text-sm leading-snug text-ink-600">{p.tagline}</span>
                 </span>

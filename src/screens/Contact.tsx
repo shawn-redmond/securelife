@@ -7,7 +7,7 @@ import { notify } from '../components/Toast'
 import { config } from '../config'
 import { maskPhone } from '../lib/format'
 import { isEmail, normalisePhone } from '../lib/validation'
-import { useStore } from '../state/store'
+import { needsMembers, useStore } from '../state/store'
 
 const genCode = () => String(Math.floor(100000 + Math.random() * 900000))
 
@@ -49,8 +49,8 @@ export function Contact() {
         subtitle="We’ll use these to send your policy documents and keep your progress safe."
         aside={<BundleSummary />}
         footer={
-          <Button block onClick={() => set(() => ({ step: 'payment' }))}>
-            Continue to payment
+          <Button block onClick={() => set((s) => ({ step: needsMembers(s) ? 'members' : 'payment' }))}>
+            Continue
           </Button>
         }
       >
@@ -58,7 +58,7 @@ export function Contact() {
           <VerifiedRow icon={<Smartphone className="h-5 w-5" />} label="Cell number" value={maskPhone(c.phone)} />
           <VerifiedRow icon={<Mail className="h-5 w-5" />} label="Email" value={c.email} />
         </div>
-        {!state.held.length && (
+        {!state.policy && (
           <LinkButton
             className="mt-5 text-sm"
             onClick={() => {
@@ -87,7 +87,7 @@ export function Contact() {
           const normal = normalisePhone(phone)!
           set((s) => ({ customer: { ...s.customer, phone: normal, email: email.trim(), contactVerified: true } }))
           notify(`Email to ${email.trim()}`, 'Your SecureLife Bundle application is saved. Tap the link in this message to pick up where you left off.')
-          setTimeout(() => set(() => ({ step: 'payment' })), 900)
+          setTimeout(() => set((s) => ({ step: needsMembers(s) ? 'members' : 'payment' })), 900)
           return 'ok'
         }}
         resend={sendCode}

@@ -65,7 +65,7 @@ export function Engage() {
             </ul>
             <div className="mt-5 flex items-center gap-2 rounded-xl bg-ink-50 px-4 py-3 text-sm text-ink-600">
               <BadgeCheck className="h-5 w-5 shrink-0 text-brand-600" aria-hidden />
-              One debit order. One ID check. Documents in minutes.
+              One policy. One debit order. One ID check.
             </div>
           </div>
         </section>

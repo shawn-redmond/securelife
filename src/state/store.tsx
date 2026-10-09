@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import type { ProductId, QuestionStep } from '../data/products'
 import { productById, sortProducts } from '../data/products'
 import type { Profile, TierId } from '../data/plans'
+import { familyCount, type FamilyCover, type MemberDetail } from '../data/family'
 import type { AllAnswers } from '../lib/pricing'
 
 export type StepId =
@@ -12,6 +13,7 @@ export type StepId =
   | 'questions'
   | 'quote'
   | 'contact'
+  | 'members'
   | 'payment'
   | 'verify'
   | 'issued'
@@ -25,6 +27,7 @@ export const STEP_NUMBER: Record<StepId, number> = {
   questions: 4,
   quote: 5,
   contact: 6,
+  members: 6,
   payment: 7,
   verify: 8,
   issued: 9,
@@ -32,13 +35,26 @@ export const STEP_NUMBER: Record<StepId, number> = {
 }
 
 export type DocStatus = 'sent' | 'retrying'
-export interface Policy {
+
+/** Each product is a benefit on the customer's single policy. */
+export interface PolicyBenefit {
   product: ProductId
-  number: string
-  monthly: number
   sumAssured: number
-  docs: DocStatus
+  /** Premium for the benefit itself (excludes family funeral lives). */
+  monthly: number
+  addedOn: string
+}
+
+/** One policy, one number, one document. Adding cover later endorses the same policy. */
+export interface Policy {
+  number: string
   startDate: string
+  version: number
+  docs: DocStatus
+  benefits: PolicyBenefit[]
+  family: FamilyCover | null
+  familyMonthly: number
+  members: MemberDetail[]
 }
 
 export type VerifyOutcome = 'success' | 'no-face' | 'liveness-fail' | 'id-mismatch'
@@ -66,6 +82,9 @@ export interface Application {
   returnToQuote: ProductId | null
   payment: PaymentInfo | null
   bindRef: string | null
+  /** Extended-family funeral lives, priced on the Family Funeral & Life benefit. */
+  family: FamilyCover | null
+  members: MemberDetail[]
 }
 
 export interface Customer {
@@ -95,7 +114,7 @@ export interface State {
   step: StepId
   app: Application
   customer: Customer
-  held: Policy[]
+  policy: Policy | null
   beneficiaries: Beneficiary[]
   kycTrigger: { type: KycTrigger; product: ProductId } | null
   kycDone: boolean
@@ -115,13 +134,15 @@ export const newApplication = (): Application => ({
   returnToQuote: null,
   payment: null,
   bindRef: null,
+  family: null,
+  members: [],
 })
 
 export const initialState = (): State => ({
   step: 'engage',
   app: newApplication(),
   customer: { phone: '', email: '', contactVerified: false, idNumber: '', identityVerified: false },
-  held: [],
+  policy: null,
   beneficiaries: [],
   kycTrigger: null,
   kycDone: false,
@@ -149,6 +170,11 @@ export function branchComplete(product: ProductId, answers: AllAnswers) {
   return productById[product].steps.every((s) => s.fields.every((f) => !!a[f.id]))
 }
 
+export const heldProducts = (s: State) => s.policy?.benefits.map((b) => b.product) ?? []
+
+/** Family funeral lives need names and dates of birth before payment. */
+export const needsMembers = (s: State) => s.app.selected.includes('life') && familyCount(s.app.family) > 0
+
 export function prevStep(s: State): Partial<State> | null {
   switch (s.step) {
     case 'recommend':
@@ -156,7 +182,7 @@ export function prevStep(s: State): Partial<State> | null {
     case 'plans':
       return { step: 'recommend' }
     case 'pick':
-      return s.held.length ? { step: 'issued' } : { step: 'recommend' }
+      return s.policy ? { step: 'issued' } : { step: 'recommend' }
     case 'questions': {
       const list = questionList(s.app.selected, s.app.onlySteps)
       const cur = list[s.app.qIndex]
@@ -172,15 +198,17 @@ export function prevStep(s: State): Partial<State> | null {
     }
     case 'contact':
       return { step: 'quote' }
-    case 'payment':
+    case 'members':
       return { step: 'contact' }
+    case 'payment':
+      return { step: needsMembers(s) ? 'members' : 'contact' }
     default:
       return null
   }
 }
 
 /** Persist from step 6 onward per spec; earlier steps hold no personal data, but we keep them too so refresh never loses progress. */
-const KEY = 'securelife-bundle:v3'
+const KEY = 'securelife-bundle:v4'
 
 function load(): State | null {
   try {

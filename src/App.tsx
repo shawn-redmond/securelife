@@ -11,6 +11,7 @@ import { Pick } from './screens/Pick'
 import { Questions } from './screens/Questions'
 import { Quote } from './screens/Quote'
 import { Contact } from './screens/Contact'
+import { Members } from './screens/Members'
 import { Payment } from './screens/Payment'
 import { Verify } from './screens/Verify'
 import { Issued } from './screens/Issued'
@@ -24,6 +25,7 @@ const SCREENS: Record<StepId, () => React.ReactElement | null> = {
   questions: Questions,
   quote: Quote,
   contact: Contact,
+  members: Members,
   payment: Payment,
   verify: Verify,
   issued: Issued,

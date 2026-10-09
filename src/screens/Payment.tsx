@@ -31,7 +31,7 @@ const fmtExp = (v: string) => {
 
 export function Payment() {
   const { state, set } = useStore()
-  const q = quoteBundle(state.app.selected, state.app.answers, state.demo.pricingUnavailable)
+  const q = quoteBundle(state.app.selected, state.app.answers, state.demo.pricingUnavailable, state.app.family)
   const [method, setMethod] = useState<'debit' | 'card'>('debit')
   const [card, setCard] = useState({ number: '', exp: '', cvv: '', name: '' })
   const [debit, setDebit] = useState({ bank: '', type: 'cheque', account: '', day: '' })
@@ -42,7 +42,7 @@ export function Payment() {
   const [declined, setDeclined] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
 
-  const existing = state.held.length > 0 ? state.app.payment : null
+  const existing = state.policy ? state.app.payment : null
   const errs = existing
     ? {}
     : method === 'card'
@@ -89,7 +89,7 @@ export function Payment() {
   return (
     <Screen
       title="Activate your cover"
-      subtitle={`One payment for your whole bundle — ${rand(q.total)} a month.`}
+      subtitle={`One payment for your whole policy: ${rand(q.total)} a month.`}
       footer={
         <div className="space-y-3">
           {submitted && !confirm && <InlineError>Please confirm you’ve read the policy summary</InlineError>}
@@ -226,7 +226,7 @@ export function Payment() {
           <ShieldCheck className="h-4 w-4 text-brand-600" aria-hidden /> Who you’re dealing with
         </p>
         <p className="mt-2">
-          {config.brand} is an authorised financial services provider ({config.brandFsp}). All covers in your bundle are underwritten by{' '}
+          {config.brand} is an authorised financial services provider ({config.brandFsp}). All benefits on your policy are underwritten by{' '}
           <strong>{config.underwriter.name}</strong> ({config.underwriter.fsp}). {config.underwriter.licence}.
         </p>
       </section>
@@ -237,7 +237,7 @@ export function Payment() {
           aria-expanded={summaryOpen}
           className="flex w-full items-center justify-between p-4 text-left text-sm font-semibold text-ink-900 hover:bg-ink-50"
         >
-          Policy summary ({q.priced.length} cover{q.priced.length === 1 ? '' : 's'})
+          Policy summary ({q.priced.length} benefit{q.priced.length === 1 ? '' : 's'})
           <ChevronDown className={cx('h-5 w-5 text-ink-400 transition', summaryOpen && 'rotate-180')} aria-hidden />
         </button>
         {summaryOpen && (

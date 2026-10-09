@@ -38,6 +38,15 @@ npm run build      # static build in dist/ (deploy anywhere, e.g. Netlify/Vercel
 - **No dead ends**: verification fails twice → document upload or WhatsApp human handoff. A pricing failure flags just that product. A document failure retries just that product. An upload failure → retry or WhatsApp.
 - **Accessibility and UX**: mobile-first with a sticky thumb-zone CTA, 56px touch targets, labelled fields, inline errors with `role="alert"`, visible focus rings, reduced-motion support, and "soft-disabled" CTAs that explain why you can't continue yet.
 
+## One policy, extended family
+
+- **One policy:** every product is a benefit on a single policy, with one policy number, one document and one debit. Adding a benefit later (no repeat ID check) updates the same policy, which goes up a version and gets a fresh document.
+- **Extended-family funeral cover** (`src/data/family.ts`, `src/components/FamilyEditor.tsx`): available on the plans and quote screens.
+  - People who can be added: partner, all children under 21 (one price), up to 4 parents or parents-in-law, and up to 6 other relatives. Parents and relatives are priced by age range.
+  - Each person is a separate life covered under the Family Funeral & Life benefit, with their own fixed payout.
+  - Names and dates of birth are collected after contact capture, on the "Who's covered" screen (`src/screens/Members.tsx`). A date of birth outside the age range a person was priced at is flagged, with a one-tap fix that re-prices them.
+  - Children's payouts step down by age. The amounts, rates and children's limits are placeholders that compliance must confirm.
+
 ## Demo controls
 
 The **Demo** pill in the header lets a presenter trigger every edge state in the spec:

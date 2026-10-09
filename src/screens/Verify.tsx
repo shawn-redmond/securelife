@@ -7,20 +7,43 @@ import { config } from '../config'
 import { maskPhone } from '../lib/format'
 import { quoteBundle } from '../lib/pricing'
 import { validateSaId } from '../lib/validation'
-import { ref, useStore, type Policy, type State } from '../state/store'
+import { ref, useStore, type Policy, type PolicyBenefit, type State } from '../state/store'
+import { familyCount, familyPremium } from '../data/family'
 
 type Phase = 'intro' | 'camera' | 'checking' | 'success' | 'fallback' | 'mismatch' | 'paused' | 'review'
 
-/** Activate every bound product once identity has passed — one check covers the whole bundle. */
+/**
+ * Activate the policy once identity has passed. One check, one policy number, one document;
+ * every product is a benefit on it. Adding cover later endorses the same policy as a new version.
+ */
 export function issuePolicies(s: State): Partial<State> {
   const q = quoteBundle(s.app.selected, s.app.answers, s.demo.pricingUnavailable)
-  const start = new Date().toISOString()
-  const policies: Policy[] = q.lines.flatMap(({ id, result }, i) =>
-    result.ok
-      ? [{ product: id, number: ref('SLB'), monthly: result.monthly, sumAssured: result.sumAssured, startDate: start, docs: s.demo.docFailure && i === 0 ? 'retrying' : 'sent' }]
-      : [],
+  const now = new Date().toISOString()
+  const benefits: PolicyBenefit[] = q.lines.flatMap(({ id, result }) =>
+    result.ok ? [{ product: id, sumAssured: result.sumAssured, monthly: result.monthly, addedOn: now }] : [],
   )
-  return { step: 'issued', held: [...s.held, ...policies], customer: { ...s.customer, identityVerified: true } }
+  const withFamily = s.app.selected.includes('life') && familyCount(s.app.family) > 0
+  const docs = s.demo.docFailure ? 'retrying' : 'sent'
+  const prev = s.policy
+  const policy: Policy = prev
+    ? {
+        ...prev,
+        version: prev.version + 1,
+        docs,
+        benefits: [...prev.benefits, ...benefits],
+        ...(withFamily ? { family: s.app.family, familyMonthly: familyPremium(s.app.family), members: s.app.members } : {}),
+      }
+    : {
+        number: ref('SLB'),
+        startDate: now,
+        version: 1,
+        docs,
+        benefits,
+        family: withFamily ? s.app.family : null,
+        familyMonthly: withFamily ? familyPremium(s.app.family) : 0,
+        members: withFamily ? s.app.members : [],
+      }
+  return { step: 'issued', policy, customer: { ...s.customer, identityVerified: true } }
 }
 
 export function Verify() {
@@ -44,7 +67,7 @@ export function Verify() {
 
   if (already)
     return (
-      <Screen title="You’re already verified" subtitle="Your ID check covers every product in your bundle — no need to do it again.">
+      <Screen title="You’re already verified" subtitle="Your ID check covers every benefit on your policy, so there’s no need to do it again.">
         <div className="flex flex-col items-center gap-4 py-10 text-center">
           <span className="grid h-20 w-20 place-items-center rounded-full bg-brand-50 text-brand-700 animate-pop">
             <BadgeCheck className="h-10 w-10" aria-hidden />
@@ -87,7 +110,7 @@ export function Verify() {
 
   if (phase === 'paused')
     return (
-      <Screen title="We’ve saved your place" subtitle={`We sent a link to ${maskPhone(state.customer.phone)} and ${state.customer.email}. Tap it whenever you’re ready — your bundle and payment are held.`}>
+      <Screen title="We’ve saved your place" subtitle={`We sent a link to ${maskPhone(state.customer.phone)} and ${state.customer.email}. Tap it whenever you’re ready — your policy and payment are held.`}>
         <Button block onClick={() => setPhase('intro')}>
           Continue now
         </Button>
@@ -96,7 +119,7 @@ export function Verify() {
 
   if (phase === 'success')
     return (
-      <Screen title="You’re verified" subtitle="Thanks — that’s the last step. Activating every cover in your bundle now.">
+      <Screen title="You’re verified" subtitle="Thanks — that’s the last step. Activating your policy now.">
         <div className="flex flex-col items-center gap-4 py-10">
           <span className="grid h-24 w-24 place-items-center rounded-full bg-brand-600 text-white shadow-lift animate-pop">
             <BadgeCheck className="h-12 w-12" aria-hidden />
@@ -140,7 +163,7 @@ export function Verify() {
 
   if (phase === 'review')
     return (
-      <Screen title="We’re reviewing your document" subtitle="Your payment and bundle are held. We’ll SMS and email you as soon as your cover is active — usually within an hour.">
+      <Screen title="We’re reviewing your document" subtitle="Your payment and policy are held. We’ll SMS and email you as soon as your cover is active — usually within an hour.">
         <Alert tone="info" title="Nothing else to do right now">
           Policies only become active once your identity is confirmed, so you won’t be charged until then.
         </Alert>
@@ -205,7 +228,7 @@ export function Verify() {
     <Screen
       eyebrow={<p className="text-sm font-semibold uppercase tracking-wider text-brand-700">Last step · about 1 minute</p>}
       title="Confirm it’s you"
-      subtitle="The law (FICA) asks us to verify your identity once. It covers every product in your bundle — now and in the future."
+      subtitle="The law (FICA) asks us to verify your identity once. It covers everyone and every benefit on your policy, now and in the future."
       footer={
         <div className="space-y-3">
           <Button

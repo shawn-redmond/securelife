@@ -11,14 +11,14 @@ const TRIGGER_COPY: Record<KycTrigger, (product: string) => string> = {
   'early-claim': (p) => `You’ve recently submitted a claim on your ${p} cover, shortly after it started. We check all early claims to protect every customer.`,
   pep: (p) => `A routine screening check on your ${p} cover needs us to confirm a few more details about you or a beneficiary.`,
   beneficiary: (p) => `The beneficiary on your ${p} cover was changed shortly before a claim, so we need to confirm a few details.`,
-  payout: (p) => `We noticed an unusual pattern of payouts across your bundle, including your ${p} cover. This is a routine check.`,
+  payout: (p) => `We noticed an unusual pattern of payouts across your policy, including your ${p} benefit. This is a routine check.`,
 }
 
 type Slot = 'address' | 'id'
 
 export function Kyc() {
   const { state, set } = useStore()
-  const trig = state.kycTrigger ?? { type: 'early-claim' as KycTrigger, product: state.held[0]?.product ?? 'life' }
+  const trig = state.kycTrigger ?? { type: 'early-claim' as KycTrigger, product: state.policy?.benefits[0]?.product ?? 'life' }
   const [files, setFiles] = useState<Record<Slot, File | null>>({ address: null, id: null })
   const [errors, setErrors] = useState<Record<Slot, string | null>>({ address: null, id: null })
   const [busy, setBusy] = useState(false)

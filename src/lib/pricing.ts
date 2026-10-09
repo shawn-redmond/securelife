@@ -1,6 +1,7 @@
 import { config } from '../config'
 import type { CapClass, ProductId } from '../data/products'
 import { productById, sortProducts } from '../data/products'
+import { familyPremium, type FamilyCover } from '../data/family'
 
 export type Answers = Record<string, string>
 export type AllAnswers = Partial<Record<ProductId, Answers>>
@@ -74,8 +75,13 @@ export function capUsed(cls: CapClass, selected: ProductId[], answers: AllAnswer
 
 export const capFor = (cls: CapClass) => config.caps[cls]
 
-export function quoteBundle(selected: ProductId[], answers: AllAnswers, unavailable: ProductId[] = []) {
-  const lines = sortProducts(selected).map((id) => ({ id, result: priceProduct(id, answers[id], unavailable.includes(id)) }))
+/** Family funeral premiums ride on the Family Funeral & Life benefit, so they need life to be selected. */
+export function quoteBundle(selected: ProductId[], answers: AllAnswers, unavailable: ProductId[] = [], family?: FamilyCover | null) {
+  const extra = familyPremium(family)
+  const lines = sortProducts(selected).map((id) => {
+    const result = priceProduct(id, answers[id], unavailable.includes(id))
+    return { id, result: id === 'life' && result.ok && extra ? { ...result, monthly: result.monthly + extra } : result }
+  })
   const total = lines.reduce((s, l) => s + (l.result.ok ? l.result.monthly : 0), 0)
   return { lines, total, priced: lines.filter((l) => l.result.ok).map((l) => l.id) }
 }

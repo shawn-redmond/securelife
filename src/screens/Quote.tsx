@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { FamilyPanel } from '../components/FamilyEditor'
+import { familyCount, familyLines, familyPremium } from '../data/family'
 import { Check, MessageCircle, PhoneCall, Plus, ShieldCheck, Trash2, TriangleAlert } from 'lucide-react'
 import { Screen } from '../components/shell'
 import { ProductIcon } from '../components/bundle'
@@ -7,13 +9,13 @@ import { PRODUCTS, productById, sortProducts, type ProductId } from '../data/pro
 import { capFor, capUsed, quoteBundle, sumAssuredOf } from '../lib/pricing'
 import { config } from '../config'
 import { cx, rand, randShort } from '../lib/format'
-import { branchComplete, questionList, useStore } from '../state/store'
+import { branchComplete, heldProducts, questionList, useStore } from '../state/store'
 
 export function Quote() {
   const { state, set } = useStore()
   const { app } = state
-  const held = state.held.map((p) => p.product)
-  const q = quoteBundle(app.selected, app.answers, state.demo.pricingUnavailable)
+  const held = heldProducts(state)
+  const q = quoteBundle(app.selected, app.answers, state.demo.pricingUnavailable, app.family)
   const upsell = PRODUCTS.filter((p) => !app.selected.includes(p.id) && !held.includes(p.id))
   const lifeUsed = capUsed('life', app.selected, app.answers)
   const plan = app.plan
@@ -42,7 +44,7 @@ export function Quote() {
 
   if (!app.selected.length)
     return (
-      <Screen title="Your bundle is empty" subtitle="Add at least one cover to see your price.">
+      <Screen title="Your policy has no benefits yet" subtitle="Add at least one benefit to see your price.">
         <Button onClick={() => set(() => ({ step: 'pick' }))}>Choose cover</Button>
       </Screen>
     )
@@ -63,7 +65,7 @@ export function Quote() {
           <span className="text-ink-500"> /month</span>
         </>
       }
-      subtitle={`${q.priced.length} cover${q.priced.length === 1 ? '' : 's'} in one bundle · one monthly debit · cancel anytime`}
+      subtitle={`${q.priced.length} benefit${q.priced.length === 1 ? '' : 's'} on one policy · one monthly debit · cancel anytime`}
       footer={
         <div className="space-y-3">
           <Button block disabled={!canProceed} onClick={() => set(() => ({ step: 'contact' }))}>
@@ -102,9 +104,25 @@ export function Quote() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
+              {id === 'life' && result.ok && familyCount(app.family) > 0 && (
+                <ul className="ml-[60px] mt-3 space-y-1.5 border-l-2 border-violet-100 pl-3 text-sm">
+                  <li className="flex justify-between gap-3 text-ink-600">
+                    <span>You · {randShort(result.sumAssured)}</span>
+                    <span className="tabular-nums">{rand(result.monthly - familyPremium(app.family))}</span>
+                  </li>
+                  {familyLines(app.family).map((l) => (
+                    <li key={l.key} className="flex justify-between gap-3 text-ink-600">
+                      <span className="min-w-0">
+                        {l.label} · {randShort(l.amount)}
+                      </span>
+                      <span className="tabular-nums">{rand(l.monthly)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {!result.ok && (
                 <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
-                  <p>{result.reason} The rest of your bundle isn’t affected — we’ll sort this one out with you directly.</p>
+                  <p>{result.reason} The rest of your policy isn’t affected — we’ll sort this one out with you directly.</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <a
                       href={config.support.whatsappLink}
@@ -127,6 +145,15 @@ export function Quote() {
         </div>
       </Card>
 
+      {app.selected.includes('life') && (
+        <FamilyPanel
+          className="mt-5"
+          family={app.family}
+          reliesOnYou={app.profile.dependants}
+          onChange={(f) => set((s) => ({ app: { ...s.app, family: f } }))}
+        />
+      )}
+
       <p className="mt-4 flex items-start gap-2 text-sm leading-relaxed text-ink-600">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden />
         <span>
@@ -145,14 +172,14 @@ export function Quote() {
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-100">
             <div className={cx('h-full rounded-full transition-all', lifeUsed > capFor('life') ? 'bg-rose-500' : 'bg-brand-500')} style={{ width: `${Math.min(100, (lifeUsed / capFor('life')) * 100)}%` }} />
           </div>
-          <p className="mt-2 text-xs text-ink-500">Microinsurance rules cap combined life-type benefits per person. We keep your bundle within the limit automatically.</p>
+          <p className="mt-2 text-xs text-ink-500">Microinsurance rules cap combined life-type benefits per person. We keep your policy within the limit automatically.</p>
         </div>
       )}
 
       {upsell.length > 0 && (
         <section className="mt-8">
-          <h2 className="font-display text-lg font-bold text-ink-950">Round out your bundle</h2>
-          <p className="mt-1 text-sm text-ink-600">Add cover now — it’s one debit and no extra paperwork.</p>
+          <h2 className="font-display text-lg font-bold text-ink-950">Add more benefits</h2>
+          <p className="mt-1 text-sm text-ink-600">They go on the same policy, with one debit and no extra paperwork.</p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {upsell.map((p) => (
               <button

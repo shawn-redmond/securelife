@@ -4,6 +4,7 @@ import { cx, rand } from '../lib/format'
 import { branchComplete, useStore } from '../state/store'
 import { priceProduct } from '../lib/pricing'
 import { config } from '../config'
+import { familyPremium } from '../data/family'
 
 export function ProductIcon({ id, size = 'md' }: { id: ProductId; size?: 'sm' | 'md' | 'lg' }) {
   const p = productById[id]
@@ -24,15 +25,16 @@ export function BundleSummary() {
   const lines = selected.map((id) => {
     const done = branchComplete(id, answers)
     const r = done ? priceProduct(id, answers[id], state.demo.pricingUnavailable.includes(id)) : null
-    return { id, price: r && r.ok ? r.monthly : null, pending: !done, exception: r && !r.ok }
+    const fam = id === 'life' ? familyPremium(state.app.family) : 0
+    return { id, price: r && r.ok ? r.monthly + fam : null, pending: !done, exception: r && !r.ok }
   })
   const total = lines.reduce((s, l) => s + (l.price ?? 0), 0)
   const anyPriced = lines.some((l) => l.price !== null)
   return (
     <div className="rounded-2xl bg-white p-5 shadow-card ring-1 ring-ink-100">
-      <p className="text-xs font-bold uppercase tracking-wider text-ink-500">Your bundle</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-ink-500">Your policy</p>
       {selected.length === 0 ? (
-        <p className="mt-3 text-sm text-ink-500">Choose at least one cover to start building your bundle.</p>
+        <p className="mt-3 text-sm text-ink-500">Choose at least one benefit to start building your policy.</p>
       ) : (
         <ul className="mt-3 space-y-3">
           {lines.map((l) => (
@@ -55,7 +57,7 @@ export function BundleSummary() {
       <div className="mt-5 flex items-start gap-2 rounded-xl bg-ink-50 p-3 text-xs leading-relaxed text-ink-600">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden />
         <span>
-          One policy relationship, one debit, one ID check. Underwritten by {config.underwriter.name}.
+          One policy number, one document, one debit, one ID check. Underwritten by {config.underwriter.name}.
         </span>
       </div>
     </div>

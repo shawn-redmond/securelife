@@ -5,13 +5,18 @@ import { ProductIcon } from '../components/bundle'
 import { Alert, Button, LinkButton } from '../components/ui'
 import { MOTOR_TIERS, PROFILE_QUESTIONS, buildPlans, missingSteps, motorPrice, planFooter, recommendTier, type Plan } from '../data/plans'
 import type { AllAnswers } from '../lib/pricing'
+import { FamilyPanel } from '../components/FamilyEditor'
+import { familyCount, familyPremium } from '../data/family'
 import { cx, rand } from '../lib/format'
 import { useStore } from '../state/store'
 
 export function Plans() {
   const { state, set } = useStore()
   const { profile } = state.app
-  const plans = useMemo(() => buildPlans(profile), [profile])
+  const family = state.app.family
+  // Family funeral lives ride on the funeral benefit, which every plan includes.
+  const plans = useMemo(() => buildPlans(profile).map((pl) => ({ ...pl, monthly: pl.monthly + familyPremium(family) })), [profile, family])
+  const famN = familyCount(family)
   const { tier, overBudget } = recommendTier(plans, profile.budget)
 
   const choose = (plan: Plan) =>
@@ -115,6 +120,13 @@ export function Plans() {
         </section>
       )}
 
+      <FamilyPanel
+        className="mb-8"
+        family={family}
+        reliesOnYou={profile.dependants}
+        onChange={(f) => set((s) => ({ app: { ...s.app, family: f } }))}
+      />
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
         {plans.map((plan, i) => {
           const rec = plan.id === tier
@@ -146,7 +158,14 @@ export function Plans() {
                 {plan.benefits.map((b) => (
                   <li key={b.product} className="flex gap-3">
                     <ProductIcon id={b.product} size="sm" />
-                    <span className="text-[15px] leading-snug text-ink-800">{b.line}</span>
+                    <span className="text-[15px] leading-snug text-ink-800">
+                      {b.line}
+                      {b.product === 'life' && famN > 0 && (
+                        <span className="mt-0.5 block text-sm font-medium text-violet-700">
+                          + funeral cover for {famN === 1 ? '1 family member' : `${famN} family members`}
+                        </span>
+                      )}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -155,7 +174,7 @@ export function Plans() {
                 Choose {plan.name}
               </Button>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ink-500">
-                <Check className="h-3.5 w-3.5 text-brand-600" aria-hidden /> {plan.benefits.length} covers · one debit
+                <Check className="h-3.5 w-3.5 text-brand-600" aria-hidden /> {plan.benefits.length} benefits · one policy · one debit
               </p>
             </article>
           )

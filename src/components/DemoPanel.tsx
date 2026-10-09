@@ -13,6 +13,7 @@ const STEP_LABEL: Record<StepId, string> = {
   questions: 'Per-product questions',
   quote: 'Bundle quote',
   contact: 'Contact capture',
+  members: 'Family details',
   payment: 'Payment & bind',
   verify: 'Identity verification',
   issued: 'Policy issued',
@@ -30,8 +31,8 @@ export function DemoPanel() {
   const patchDemo = (p: Partial<typeof d>) => set((s) => ({ demo: { ...s.demo, ...p } }))
 
   const trigger = (type: KycTrigger) => {
-    if (!state.held.length) return
-    set((s) => ({ step: 'kyc', kycTrigger: { type, product: s.held[0].product }, kycDone: false }))
+    if (!state.policy) return
+    set((s) => ({ step: 'kyc', kycTrigger: { type, product: s.policy!.benefits.find((b) => b.product === 'life')?.product ?? s.policy!.benefits[0].product }, kycDone: false }))
     setOpen(false)
   }
 
@@ -94,12 +95,12 @@ export function DemoPanel() {
 
         <Group title="Step 9 · Documents">
           <Chip on={d.docFailure} onClick={() => patchDemo({ docFailure: !d.docFailure })}>
-            One product’s document fails first time
+            Policy document fails first time
           </Chip>
         </Group>
 
         <Group title="Step 10 · Trigger progressive KYC">
-          {state.held.length ? (
+          {state.policy ? (
             <div className="flex flex-wrap gap-2">
               <Chip onClick={() => trigger('early-claim')}>Early claim</Chip>
               <Chip onClick={() => trigger('pep')}>PEP / sanctions match</Chip>
