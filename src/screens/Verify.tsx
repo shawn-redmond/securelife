@@ -35,7 +35,7 @@ export function issuePolicies(s: State): Partial<State> {
         ...(withFamily ? { family: s.app.family, familyMonthly: familyPremium(s.app.family), members: s.app.members } : {}),
       }
     : {
-        number: ref('SLB'),
+        number: ref('BND'),
         startDate: now,
         version: 1,
         docs,
@@ -229,7 +229,7 @@ export function Verify() {
           <OptionRow
             icon={<MessageCircle className="h-5 w-5" />}
             title="Chat to a person on WhatsApp"
-            body={`A SecureLife agent will verify you on a quick video call. ${config.support.whatsapp}`}
+            body={`A bundle.insure agent will verify you on a quick video call. ${config.support.whatsapp}`}
             href={config.support.whatsappLink}
           />
         </div>
@@ -411,15 +411,15 @@ function CameraView({ checking }: { checking: boolean }) {
   }, [])
 
   return (
-    <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-3xl bg-ink-900 shadow-lift">
+    <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-3xl bg-[#050b14] shadow-lift ring-1 ring-ink-100">
       <video ref={video} autoPlay playsInline muted className={`absolute inset-0 h-full w-full -scale-x-100 object-cover ${live ? '' : 'hidden'}`} />
       {!live && (
-        <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-ink-700 to-ink-900">
-          <svg viewBox="0 0 200 220" className="h-[78%] text-ink-500" aria-hidden>
+        <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-ink-200 to-[#050b14]">
+          <svg viewBox="0 0 200 220" className="h-[78%] text-ink-300" aria-hidden>
             <circle cx="100" cy="80" r="46" fill="currentColor" />
             <path d="M20 220c0-50 36-82 80-82s80 32 80 82z" fill="currentColor" />
           </svg>
-          <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-semibold text-white">Demo camera</span>
+          <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-semibold text-ink-950">Demo camera</span>
         </div>
       )}
       {/* Face-position guide */}
@@ -431,14 +431,14 @@ function CameraView({ checking }: { checking: boolean }) {
           </mask>
         </defs>
         <rect width="300" height="400" fill="rgba(15,18,26,.55)" mask="url(#oval)" />
-        <ellipse cx="150" cy="180" rx="95" ry="125" fill="none" stroke={checking ? '#30d0a0' : 'white'} strokeWidth="3" strokeDasharray={checking ? '0' : '8 6'} />
+        <ellipse cx="150" cy="180" rx="95" ry="125" fill="none" stroke={checking ? '#FFC211' : '#FFFFFF'} strokeWidth="3" strokeDasharray={checking ? '0' : '8 6'} />
       </svg>
       {checking && (
         <div className="absolute inset-x-[18%] top-[14%] h-[62%] overflow-hidden">
           <div className="h-full w-full animate-scan bg-gradient-to-b from-transparent via-brand-400/40 to-transparent" />
         </div>
       )}
-      <p className="absolute inset-x-0 bottom-4 text-center text-sm font-semibold text-white drop-shadow">
+      <p className="absolute inset-x-0 bottom-4 text-center text-sm font-semibold text-ink-950 drop-shadow">
         {checking ? 'Matching…' : 'Position your face in the oval'}
       </p>
     </div>

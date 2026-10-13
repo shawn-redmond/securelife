@@ -74,7 +74,7 @@ export const PRODUCTS: Product[] = [
     short: 'Medical',
     tagline: 'A cash payout when an accident or emergency puts you in hospital.',
     icon: Ambulance,
-    tint: { bg: 'bg-rose-50', fg: 'text-rose-600', ring: 'ring-rose-200', bar: 'bg-rose-500' },
+    tint: { bg: 'bg-rose-100', fg: 'text-rose-700', ring: 'ring-rose-200', bar: 'bg-rose-500' },
     capClass: 'life',
     claimsNote: 'Send your hospital admission note via WhatsApp — most claims paid in 48 hours.',
     steps: [
@@ -105,7 +105,7 @@ export const PRODUCTS: Product[] = [
     short: 'Household',
     tagline: 'A fixed payout if your things are lost to fire, flood or burglary.',
     icon: House,
-    tint: { bg: 'bg-amber-50', fg: 'text-amber-600', ring: 'ring-amber-200', bar: 'bg-amber-500' },
+    tint: { bg: 'bg-brand-50', fg: 'text-brand-500', ring: 'ring-brand-200', bar: 'bg-brand-500' },
     capClass: 'nonLife',
     claimsNote: 'Report a burglary with your SAPS case number; fire and flood with a few photos.',
     steps: [
@@ -161,7 +161,7 @@ export const PRODUCTS: Product[] = [
     short: 'Life',
     tagline: 'Fast cash for funeral costs — paid out within 48 hours.',
     icon: HandHeart,
-    tint: { bg: 'bg-violet-50', fg: 'text-violet-600', ring: 'ring-violet-200', bar: 'bg-violet-500' },
+    tint: { bg: 'bg-violet-100', fg: 'text-violet-700', ring: 'ring-violet-200', bar: 'bg-violet-500' },
     capClass: 'life',
     claimsNote: 'One call or WhatsApp with the death certificate — paid within 48 hours.',
     steps: [
@@ -199,7 +199,7 @@ export const PRODUCTS: Product[] = [
     short: 'Critical illness',
     tagline: 'A lump sum if you’re diagnosed with cancer, heart attack or stroke.',
     icon: HeartPulse,
-    tint: { bg: 'bg-sky-50', fg: 'text-sky-600', ring: 'ring-sky-200', bar: 'bg-sky-500' },
+    tint: { bg: 'bg-green-50', fg: 'text-green-600', ring: 'ring-green-200', bar: 'bg-green-500' },
     capClass: 'life',
     claimsNote: 'Your doctor’s diagnosis report is all we need to start.',
     steps: [
@@ -239,7 +239,7 @@ export const PRODUCTS: Product[] = [
     short: 'Motor',
     tagline: 'A fixed payout if your car is stolen or written off.',
     icon: Car,
-    tint: { bg: 'bg-slate-100', fg: 'text-slate-600', ring: 'ring-slate-300', bar: 'bg-slate-500' },
+    tint: { bg: 'bg-slate-100', fg: 'text-slate-700', ring: 'ring-slate-300', bar: 'bg-slate-500' },
     capClass: 'nonLife',
     claimsNote: 'Report theft with a SAPS case number, or a write-off with the assessor’s report.',
     steps: [

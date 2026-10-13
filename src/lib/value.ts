@@ -39,9 +39,9 @@ export function totalProtection(selected: ProductId[], answers: AllAnswers, fami
 
 /** Personalised phrase from who the customer said relies on them. */
 export function forWhom(deps: Dependant[] | undefined) {
-  const names = { partner: 'your partner', children: 'your children', parents: 'your family' }
+  const names = { partner: 'your partner', children: 'your children', parents: 'your parents' }
   const xs = (deps ?? []).filter((d): d is keyof typeof names => d !== 'me').map((d) => names[d])
-  return xs.length ? `you and ${join(xs)}` : 'you'
+  return join(['you', ...xs])
 }
 
 const plural = (n: number) => (n === 1 ? '1 month' : `${n} months`)

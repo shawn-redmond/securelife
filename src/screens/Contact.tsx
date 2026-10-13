@@ -30,7 +30,7 @@ export function Contact() {
 
   const sendCode = () => {
     otp.current = { code: genCode(), issuedAt: Date.now() }
-    notify(`SMS to ${maskPhone(phone)}`, `Your SecureLife PIN is ${otp.current.code}. It expires in 5 minutes. Never share this PIN.`)
+    notify(`SMS to ${maskPhone(phone)}`, `Your bundle.insure PIN is ${otp.current.code}. It expires in 5 minutes. Never share this PIN.`)
   }
 
   const submit = () => {
@@ -88,7 +88,7 @@ export function Contact() {
           if (entered !== otp.current.code) return 'wrong'
           const normal = normalisePhone(phone)!
           set((s) => ({ customer: { ...s.customer, firstName: firstName.trim(), phone: normal, email: email.trim(), contactVerified: true } }))
-          notify(`Email to ${email.trim()}`, 'Your SecureLife Bundle application is saved. Tap the link in this message to pick up where you left off.')
+          notify(`Email to ${email.trim()}`, 'Your bundle.insure application is saved. Tap the link in this message to pick up where you left off.')
           setTimeout(() => set((s) => ({ step: needsMembers(s) ? 'members' : 'payment' })), 900)
           return 'ok'
         }}

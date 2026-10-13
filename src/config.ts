@@ -5,7 +5,7 @@
  * for the prototype — replace with confirmed values before go-live.
  */
 export const config = {
-  brand: 'SecureLife Bundle',
+  brand: 'bundle.insure',
   brandFsp: 'FSP 00000',
   underwriter: {
     name: 'Example Microinsurer (RF) Ltd',

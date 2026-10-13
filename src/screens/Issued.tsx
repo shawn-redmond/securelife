@@ -171,13 +171,13 @@ export function Issued() {
           <HeartHandshake className="h-5 w-5 text-brand-600" aria-hidden /> Let your family know they’re covered
         </p>
         <p className="mt-1 text-sm text-ink-600">The people you love should know who to call. Send them this on WhatsApp:</p>
-        <blockquote className="mt-3 rounded-xl rounded-tl-sm bg-[#e7f7ef] p-3 text-sm leading-relaxed text-ink-800">{shareText}</blockquote>
+        <blockquote className="mt-3 rounded-xl rounded-tl-sm bg-green-50 p-3 text-sm leading-relaxed text-ink-800 ring-1 ring-green-200">{shareText}</blockquote>
         <div className="mt-3 flex flex-wrap gap-2">
           <a
             href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#1fa855] px-4 text-sm font-semibold text-white transition hover:bg-[#178a45]"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-navy transition hover:bg-[#3ee07b]"
           >
             <MessageCircle className="h-4 w-4" aria-hidden /> Share on WhatsApp
           </a>
@@ -354,8 +354,8 @@ function downloadPolicy(state: State) {
   const famRow = p.familyMonthly ? `<tr><td>Family funeral cover (${familyCount(p.family)} lives)</td><td>See lives covered</td><td>R${p.familyMonthly}</td><td></td></tr>` : ''
   const total = p.benefits.reduce((s, b) => s + b.monthly, 0) + p.familyMonthly
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${config.brand} – Policy ${p.number}</title>
-<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;color:#1a1e2b}h1{color:#04755c;margin-bottom:4px}h2{margin-top:32px;font-size:16px}table{width:100%;border-collapse:collapse;margin:12px 0}td,th{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}th{background:#f6f7f9;font-size:13px;text-transform:uppercase;letter-spacing:.04em}small{color:#667391}</style></head>
-<body><h1>${config.brand} policy schedule</h1><p><strong>Policy number ${p.number}</strong> · version ${p.version} · started ${longDate(new Date(p.startDate))}<br/>Policyholder contact: ${maskPhone(state.customer.phone)} · ${state.customer.email} · Identity verified (FICA)</p>
+<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;color:#1a1e2b}h1{color:#0C192B;margin-bottom:4px}h1 span{color:#d99e00}h2{margin-top:32px;font-size:16px}table{width:100%;border-collapse:collapse;margin:12px 0}td,th{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}th{background:#f6f7f9;font-size:13px;text-transform:uppercase;letter-spacing:.04em}small{color:#667391}</style></head>
+<body><h1><span>●●●●</span> ${config.brand} policy schedule</h1><p><strong>Policy number ${p.number}</strong> · version ${p.version} · started ${longDate(new Date(p.startDate))}<br/>Policyholder contact: ${maskPhone(state.customer.phone)} · ${state.customer.email} · Identity verified (FICA)</p>
 <h2>Benefits</h2><table><thead><tr><th>Benefit</th><th>Fixed amount</th><th>Monthly</th><th>Added</th></tr></thead><tbody>${rows}${famRow}</tbody>
 <tfoot><tr><th colspan="2">Total monthly premium</th><th colspan="2">R${total}</th></tr></tfoot></table>
 ${lives ? `<h2>Lives covered for funerals</h2><table><thead><tr><th>Name</th><th>Relationship</th><th>Funeral payout</th></tr></thead><tbody>${lives}</tbody></table>` : ''}
@@ -363,7 +363,7 @@ ${lives ? `<h2>Lives covered for funerals</h2><table><thead><tr><th>Name</th><th
   const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
   const a = document.createElement('a')
   a.href = url
-  a.download = `SecureLife-policy-${p.number}.html`
+  a.download = `bundle-insure-policy-${p.number}.html`
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
   notify(`Email to ${state.customer.email}`, `A copy of policy ${p.number} is attached.`)

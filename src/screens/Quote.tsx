@@ -65,11 +65,13 @@ export function Quote() {
             {plan ? (customised ? `Your plan · based on ${plan.name}` : `Your ${plan.name} plan`) : 'Your quote is ready'}
           </p>
           {canProceed && (
-            <div className="flex items-start gap-3 rounded-2xl bg-brand-700 p-4 text-white shadow-lift">
-              <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-brand-200" aria-hidden />
+            <div className="flex items-start gap-3 rounded-2xl bg-ink-100 p-4 ring-1 ring-brand-300">
+              <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-brand-500" aria-hidden />
               <div>
-                <p className="font-display text-xl font-extrabold leading-tight">Up to {randLong(protection)} in payouts</p>
-                <p className="mt-0.5 text-sm text-brand-100">
+                <p className="font-display text-xl font-extrabold leading-tight text-ink-950">
+                  Up to <span className="italic text-brand-500">{randLong(protection)}</span> in payouts
+                </p>
+                <p className="mt-0.5 text-sm text-ink-600">
                   Protecting {protectedWho}. Paid within {config.promises.claimPayoutHours} hours of a valid claim, once any waiting period has passed.
                 </p>
               </div>

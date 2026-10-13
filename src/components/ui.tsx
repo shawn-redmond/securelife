@@ -27,15 +27,15 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const base =
-    'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30 active:scale-[.98] disabled:cursor-not-allowed'
+    'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30 active:scale-[.98] disabled:cursor-not-allowed'
   const sizes = { sm: 'h-9 px-3 text-sm', md: 'h-11 px-4 text-[15px]', lg: 'h-14 px-6 text-base' }
   const variants: Record<Variant, string> = {
     primary: softDisabled
       ? 'bg-ink-200 text-ink-500 shadow-none'
-      : 'bg-brand-700 text-white shadow-[0_6px_16px_-6px_rgba(4,117,92,.6)] hover:bg-brand-800 disabled:bg-ink-200 disabled:text-ink-500 disabled:shadow-none',
-    secondary: 'bg-white text-ink-900 ring-1 ring-inset ring-ink-200 hover:bg-ink-50 hover:ring-ink-300',
-    ghost: 'text-brand-700 hover:bg-brand-50',
-    danger: 'bg-rose-600 text-white hover:bg-rose-700',
+      : 'bg-brand-500 text-navy shadow-[0_8px_24px_-10px_rgba(255,194,17,.55)] hover:bg-brand-800 disabled:bg-ink-200 disabled:text-ink-500 disabled:shadow-none',
+    secondary: 'bg-ink-100 text-ink-950 ring-1 ring-inset ring-ink-200 hover:bg-ink-200',
+    ghost: 'text-brand-500 hover:bg-brand-50',
+    danger: 'bg-rose-500 text-ink-950 hover:bg-rose-400',
   }
   return (
     <button
@@ -190,7 +190,7 @@ export function Alert({ tone = 'info', title, children, className, action }: { t
     info: 'bg-sky-50 text-sky-900 ring-sky-200',
     warning: 'bg-amber-50 text-amber-900 ring-amber-200',
     error: 'bg-rose-50 text-rose-900 ring-rose-200',
-    success: 'bg-brand-50 text-brand-900 ring-brand-200',
+    success: 'bg-green-50 text-green-900 ring-green-300',
   }
   const Icon = { info: Info, warning: TriangleAlert, error: CircleAlert, success: CircleCheck }[tone]
   return (

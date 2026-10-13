@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { ChevronLeft, CloudCheck, MessageCircle, ShieldCheck, X } from 'lucide-react'
+import { ChevronLeft, CloudCheck, MessageCircle, X } from 'lucide-react'
 import { config } from '../config'
 import { cx, maskPhone } from '../lib/format'
 import { DemoPanel } from './DemoPanel'
@@ -14,13 +14,13 @@ const PHASES: { label: string; steps: StepId[] }[] = [
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cx('inline-flex items-center gap-2', className)}>
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-700 text-white shadow-sm">
-        <ShieldCheck className="h-5 w-5" aria-hidden />
+    <span className={cx('inline-flex items-center gap-2.5', className)}>
+      <span className="flex items-center gap-1" aria-hidden>
+        {['#EF009B', '#29AF3E', '#287EFF', '#FFC211'].map((c) => (
+          <span key={c} className="h-3 w-3 rounded-full sm:h-3.5 sm:w-3.5" style={{ background: c }} />
+        ))}
       </span>
-      <span className="whitespace-nowrap font-display text-[17px] font-extrabold tracking-tight text-ink-900">
-        SecureLife<span className="text-brand-600"> Bundle</span>
-      </span>
+      <span className="whitespace-nowrap font-display text-[19px] font-bold text-ink-950">bundle.insure</span>
     </span>
   )
 }
@@ -31,7 +31,7 @@ export function Header() {
   const showProgress = state.step !== 'engage'
   const saved = state.customer.contactVerified && STEP_NUMBER[state.step] >= 6 && state.step !== 'issued'
   return (
-    <header className="sticky top-0 z-30 border-b border-ink-100 bg-white/85 backdrop-blur-md supports-[backdrop-filter]:bg-white/70">
+    <header className="sticky top-0 z-30 border-b border-ink-100 bg-navy/90 backdrop-blur-md supports-[backdrop-filter]:bg-navy/75">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
         <div className="w-10">
           {showProgress && canGoBack && (
@@ -58,9 +58,9 @@ export function Header() {
             href={config.support.whatsappLink}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-ink-700 transition hover:bg-ink-100"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink-100 px-3 text-sm font-semibold text-ink-950 transition hover:bg-ink-200 sm:px-4"
           >
-            <MessageCircle className="h-5 w-5 text-brand-600" aria-hidden />
+            <MessageCircle className="h-4 w-4 text-brand-500" aria-hidden />
             <span className="hidden sm:inline">Help</span>
           </a>
         </div>
@@ -118,7 +118,7 @@ export function Screen({
           <div className="mt-7 flex-1">{children}</div>
         </div>
         {footer && (
-          <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t border-ink-100 bg-white/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-md sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:pb-10 sm:backdrop-blur-0">
+          <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t border-ink-100 bg-navy/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-md sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:pb-10 sm:backdrop-blur-0">
             {footer}
           </div>
         )}
@@ -137,8 +137,12 @@ export function BotBubble({ children, delay = 0 }: { children: ReactNode; delay?
   }, [delay])
   return (
     <div className="flex items-end gap-2.5">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm" aria-hidden>
-        <ShieldCheck className="h-5 w-5" />
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink-100 shadow-sm" aria-hidden>
+        <span className="grid grid-cols-2 gap-0.5">
+          {['#EF009B', '#29AF3E', '#287EFF', '#FFC211'].map((c) => (
+            <span key={c} className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />
+          ))}
+        </span>
       </span>
       <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-4 py-3 text-[15px] leading-relaxed text-ink-800 shadow-card ring-1 ring-ink-100" aria-live="polite">
         {typing ? (

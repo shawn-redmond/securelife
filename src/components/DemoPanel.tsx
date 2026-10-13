@@ -40,7 +40,7 @@ export function DemoPanel() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-ink-950 px-3 text-xs font-semibold text-white transition hover:bg-ink-800"
+        className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-ink-600 ring-1 ring-inset ring-ink-200 transition hover:text-ink-950 hover:ring-ink-300"
       >
         <FlaskConical className="h-3.5 w-3.5" aria-hidden /> <span className="sr-only sm:not-sr-only">Demo</span>
       </button>

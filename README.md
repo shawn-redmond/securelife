@@ -1,8 +1,12 @@
-# SecureLife Bundle — onboarding journey (front-end prototype)
+# bundle.insure — onboarding journey (front-end prototype)
 
-A clickable, production-quality front end for the 10-step SecureLife Bundle onboarding journey (spec v11). There's no backend: pricing, OTP, payments, Home Affairs verification and document delivery are simulated in the browser so the whole journey can be demoed end to end.
+A clickable, production-quality front end for the 10-step bundle.insure onboarding journey (originally specified as SecureLife Bundle, spec v11; now v12). There's no backend: pricing, OTP, payments, Home Affairs verification and document delivery are simulated in the browser so the whole journey can be demoed end to end.
 
 **Requirements:** `docs/requirements-v12.md` is the current handoff spec. It supersedes the v11 PDF and lists every change.
+
+## Branding
+
+The prototype uses the bundle.insure identity: navy `#0C192B`, slate `#1E2B3B`, yellow `#FFC211` and the four logo-dot colours. Colours live in `tailwind.config.js`. Utility names from the original light theme are remapped for the dark ground (`white` is the card surface, `ink` is inverted), so components didn't need rewriting. The brand name is in `src/config.ts`.
 
 ## Run it
 
